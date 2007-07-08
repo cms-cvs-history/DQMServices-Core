@@ -186,9 +186,8 @@ class DaqMonitorBEInterface: public StringUtil
 						      unsigned int tag) 
     const = 0;
 
- protected:
-  
-  // ------------------- Private "getters" ------------------------------
+  // protected:
+  // ------------------- not anymore private "getters" ------------------------------
   
   /// add all (tagged) MEs to put_here
   virtual void get(const dqm::me_util::dir_map & Dir, 
@@ -604,6 +603,15 @@ class DaqMonitorBEInterface: public StringUtil
   /// attach quality test <qtname> to tagged MEs ==> FAST
   void useQTest(unsigned int tag, const dqm::me_util::rootDir & Dir,
 		QCriterion * qc) const;
+
+  ///
+  void useQTest(std::string search_string, std::string qtname) const;
+  ///
+  void useQTest(unsigned int tag, std::string search_string, 
+		std::string qtname) const;
+  ///
+  void useQTest(unsigned int tag, std::string qtname) const;
+
 
   /// scan structure <rDir>, looking for all MEs matching <search_string>;
   /// put results in <put_here>
