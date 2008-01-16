@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include <TApplication.h>
+#include <TCanvas.h>
 #include <TBrowser.h>
 #include <TRandom.h> // this is just the random number generator
 
