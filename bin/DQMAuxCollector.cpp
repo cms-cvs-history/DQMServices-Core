@@ -1,6 +1,5 @@
 #include <string>
 #include <iostream>
-#include "TApplication.h"
 #include "TROOT.h"
 
 #include "DQMServices/Core/interface/AuxCollectorRoot.h"

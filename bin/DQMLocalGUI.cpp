@@ -6,10 +6,7 @@
 
 #include <TApplication.h>
 #include <TCanvas.h>
-#include <TBrowser.h>
-#include <TRandom.h> // this is just the random number generator
 
-#include <SealBase/Callback.h>
 
 
 using std::cout; using std::endl;
