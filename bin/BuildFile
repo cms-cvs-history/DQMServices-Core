@@ -1,4 +1,2 @@
 <use name=DQMServices/Core>
 <bin file=DQMCollector.cpp></bin>
-<bin file=DQMAuxCollector.cpp></bin>
-<bin file=DQMLocalGUI.cpp></bin>
