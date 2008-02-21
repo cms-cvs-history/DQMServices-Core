@@ -20,6 +20,11 @@ class MonitorElementRootFolder;
 class DQMTagHelper;
 class CollateMonitorElement;
 class TObject;
+class TH1F;
+class TH2F;
+class TH3F;
+class TProfile;
+class TProfile2D;
 
 namespace edm {
   class DQMHttpSource;
@@ -40,7 +45,7 @@ class DaqMonitorBEInterface: public StringUtil
  
   void reParseConfig(const edm::ParameterSet &pset){}
  
-  // ---------------------- Booking ------------------------------------
+ 
   /// book 1D histogram
   virtual MonitorElement * book1D(std::string name, 
 				  std::string title, 
@@ -679,6 +684,24 @@ class DaqMonitorBEInterface: public StringUtil
   void removeCollate(CollateMonitorElement * cme);
   //
  private:
+ 
+ 
+   // ---------------------- Booking ------------------------------------
+  //book 1D histogram using existing histogram
+  virtual MonitorElement * clone1D(std::string name, TH1F* source) = 0 ;
+  //book 2D histogram using existing histogram
+  virtual MonitorElement * clone2D(std::string name, TH2F* source) = 0 ;
+
+  //book 3D histogram using existing histogram
+  virtual MonitorElement * clone3D(std::string name, TH3F* source) = 0 ;
+
+  //book TProfile using existing profile
+  virtual MonitorElement * cloneProfile(std::string name, TProfile* source) = 0;
+
+  //book TProfile2D using existing profile
+  virtual MonitorElement * cloneProfile2D(std::string name, TProfile2D* source)
+  = 0 ;
+
   /// use to printout warning when calling quality tests twice without
   /// having called resetMonitoringDiff, resetMonitorableDiff in between...
   /// (to be reset in MonitorUserInterface::runQualityTests)
@@ -714,6 +737,9 @@ class DaqMonitorBEInterface: public StringUtil
   friend class CollateMERootProf2D;
 
   friend class edm::DQMHttpSource;
+  
+  friend class EDMtoMEConverter;
+  friend class MEtoEDMConverter;
 };
 
 
