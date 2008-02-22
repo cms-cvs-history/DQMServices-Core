@@ -9,7 +9,7 @@
 #include "classlib/utils/StringOps.h"
 #include "classlib/utils/SystemError.h"
 #include "classlib/utils/Regexp.h"
-#include "TBuffer.h"
+#include "DQMRootBuffer.h"
 #include "TObjString.h"
 #include "TObject.h"
 #include "TProfile2D.h"
@@ -181,7 +181,7 @@ DQMNet::releaseWaiters(Object *o)
 //////////////////////////////////////////////////////////////////////
 // Deserialise a ROOT object from a buffer at the current position.
 static TObject *
-extractNextObject(TBuffer &buf)
+extractNextObject(DQMRootBuffer &buf)
 {
   if (buf.Length() == buf.BufferSize())
     return 0;
@@ -208,7 +208,7 @@ abortReconstructObject(DQMNet::Object &o)
 bool
 DQMNet::reconstructObject(Object &o)
 {
-  TBuffer buf(TBuffer::kRead, o.rawdata.size(), &o.rawdata[0], kFALSE);
+  DQMRootBuffer buf(DQMRootBuffer::kRead, o.rawdata.size(), &o.rawdata[0], kFALSE);
   buf.Reset();
 
   // Extract the main object.
@@ -398,7 +398,7 @@ DQMNet::sendObjectToPeer(Bucket *msg, Object &o, bool data, bool text)
     TObject *obj = o.object;
     if (! obj && o.rawdata.size())
     {
-      TBuffer buf(TBuffer::kRead, o.rawdata.size(), &o.rawdata[0], kFALSE);
+      DQMRootBuffer buf(DQMRootBuffer::kRead, o.rawdata.size(), &o.rawdata[0], kFALSE);
       buf.InitMap();
       buf.Reset();
       obj = extractNextObject(buf);
