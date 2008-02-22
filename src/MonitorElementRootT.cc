@@ -6,6 +6,7 @@
 #include "TF1.h"
 #include "TMath.h"
 #include "TClass.h"
+#include "TList.h"
 
 using namespace dqm::me_util;
 
