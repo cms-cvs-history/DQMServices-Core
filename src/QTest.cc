@@ -25,31 +25,6 @@ QCriterion::init(void)
   message_ = "NO_MESSAGE";
 }
 
-// make sure algorithm can run (false: should not run)
-bool
-QCriterion::check(const MonitorElement *me)
-{
-  // reset result
-  prob_ = -1;
-
-  if (!isEnabled())
-  {
-    setDisabled();
-    return false;
-  }
-
-  if (!me)
-  {
-    setInvalid();
-    return false;
-  }
-
- 
-
-  // if here, we can run the test
-  return true;
-}
-
 // set status & message for disabled tests
 void
 QCriterion::setDisabled(void)

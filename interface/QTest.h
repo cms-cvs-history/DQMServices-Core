@@ -143,9 +143,6 @@ protected:
   void update(void)
     { wasModified_ = true; }
 
-  /// make sure algorithm can run (false: should not run)
-  bool check(const MonitorElement *me);
-
   /// true if probability value is valid
   bool validProb(float prob) const
     { return prob >= 0 && prob <= 1; }
@@ -216,7 +213,6 @@ protected:
  /// run the test on MonitorElement <me> (result: [0, 1] or <0 for failure)
  virtual float runTest(const MonitorElement *me)
  {
-      if (! check(me)) return -1;
      
       prob_ = runMyTest(me);
 
