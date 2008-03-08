@@ -153,23 +153,23 @@ DQMStore::DQMStore(const edm::ParameterSet &pset)
     open(ref, false, "", s_referenceDirName);
   }
 
-  initQCriterion<Comp2RefChi2>(qalgos_);
-  initQCriterion<Comp2RefKolmogorov>(qalgos_);
+  //initQCriterion<Comp2RefChi2>(qalgos_);
+  //initQCriterion<Comp2RefKolmogorov>(qalgos_);
   initQCriterion<ContentsXRange>(qalgos_);
-  initQCriterion<ContentsYRange>(qalgos_);
-  initQCriterion<Comp2RefEqualString>(qalgos_);
-  initQCriterion<Comp2RefEqualInt>(qalgos_);
-  initQCriterion<Comp2RefEqualFloat>(qalgos_);
+  //initQCriterion<ContentsYRange>(qalgos_);
+  //initQCriterion<Comp2RefEqualString>(qalgos_);
+  //initQCriterion<Comp2RefEqualInt>(qalgos_);
+  //initQCriterion<Comp2RefEqualFloat>(qalgos_);
   initQCriterion<Comp2RefEqualH1>(qalgos_);
-  initQCriterion<Comp2RefEqualH2>(qalgos_);
-  initQCriterion<Comp2RefEqualH3>(qalgos_);
-  initQCriterion<MeanWithinExpected>(qalgos_);
-  initQCriterion<DeadChannel>(qalgos_);
-  initQCriterion<NoisyChannel>(qalgos_);
-  initQCriterion<MostProbableLandau>(qalgos_);
-  initQCriterion<ContentsTH2FWithinRange>(qalgos_);
-  initQCriterion<ContentsProfWithinRange>(qalgos_);
-  initQCriterion<ContentsProf2DWithinRange>(qalgos_);
+  //initQCriterion<Comp2RefEqualH2>(qalgos_);
+  //initQCriterion<Comp2RefEqualH3>(qalgos_);
+  //initQCriterion<MeanWithinExpected>(qalgos_);
+  //initQCriterion<DeadChannel>(qalgos_);
+  //initQCriterion<NoisyChannel>(qalgos_);
+  //initQCriterion<MostProbableLandau>(qalgos_);
+  //initQCriterion<ContentsTH2FWithinRange>(qalgos_);
+  //initQCriterion<ContentsProfWithinRange>(qalgos_);
+  //initQCriterion<ContentsProf2DWithinRange>(qalgos_);
 }
 
 DQMStore::~DQMStore(void)
