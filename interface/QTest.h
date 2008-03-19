@@ -127,7 +127,7 @@ protected:
       assert(qr.qcriterion_ == this);
       assert(qv.qtname == qtname_);
 
-      //this runTest goes to runTest in QCriterionBase !
+      //this runTest goes to SimpleTest
       float prob = runTest(me);
 
       qv.code = status_ ;
@@ -197,19 +197,26 @@ private:
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-class QCriterionBase : public QCriterion
+class SimpleTest : public QCriterion
 {
-public:
-  QCriterionBase(const std::string &name)
-    : QCriterion(name)
-    {}
+ public:
+  SimpleTest(const std::string &name, bool keepBadChannels = false) : QCriterion(name),
+  minEntries_ (0),
+  keepBadChannels_ (keepBadChannels)
+  {}
 
+  /// set minimum # of entries needed
+  void setMinimumEntries(unsigned n)
+  { minEntries_ = n; this->update(); }
 
-protected:
+  /// get vector of channels that failed test (not always relevant!)
+  virtual std::vector<DQMChannel> getBadChannels(void) const
+  { return keepBadChannels_ ? badChannels_ : QCriterion::getBadChannels(); }
 
-  //define runMyTest function 
- virtual float runMyTest(const MonitorElement *me) = 0;
- 
+  virtual float runMyTest(const MonitorElement *me)=0;
+
+ protected:
+
  /// run the test on MonitorElement <me> (result: [0, 1] or <0 for failure)
  virtual float runTest(const MonitorElement *me)
  {
@@ -227,29 +234,6 @@ protected:
       else setOk();
     }
 
-};
-
-/// Class T must be one of the usual histogram/profile objects: THX
-/// for method notEnoughStats to be used...
-
-class SimpleTest : public QCriterionBase
-{
-public:
-  SimpleTest(const std::string &name, bool keepBadChannels = false)
-    : QCriterionBase(name),
-      minEntries_ (0),
-      keepBadChannels_ (keepBadChannels)
-    {}
-
-  /// set minimum # of entries needed
-  void setMinimumEntries(unsigned n)
-    { minEntries_ = n; this->update(); }
-
-  /// get vector of channels that failed test (not always relevant!)
-  virtual std::vector<DQMChannel> getBadChannels(void) const
-    { return keepBadChannels_ ? badChannels_ : QCriterionBase::getBadChannels(); }
-
-protected:
   virtual void setMessage(void)
     {
       std::ostringstream message;
@@ -261,7 +245,8 @@ protected:
   unsigned minEntries_;  //< minimum # of entries needed
   std::vector<DQMChannel> badChannels_;
   bool keepBadChannels_;
-};
+ };
+
 
 //===============================================================//
 //========= Classes for particular QUALITY TESTS ================//
@@ -279,7 +264,7 @@ public:
   { return "Comp2RefEqualH"; }
 
 public:
-  using SimpleTest::runTest;
+
   virtual float runMyTest(const MonitorElement*me);
 
 protected:
@@ -297,13 +282,11 @@ public:
    Comp2RefChi2(const std::string &name) :SimpleTest(name)
    { setAlgoName(getAlgoName()); }
 
+   virtual float runMyTest(const MonitorElement*me);
+
    static std::string getAlgoName(void)
    { return "Comp2RefChi2"; }
-
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement*me);
-
+  
 protected:
 
   virtual void setMessage(void)
@@ -335,12 +318,10 @@ public:
   Comp2RefKolmogorov(const std::string &name) : SimpleTest(name)
   { setAlgoName(getAlgoName()); }
 
+  virtual float runMyTest(const MonitorElement *me);
+
   static std::string getAlgoName(void)
   { return "Comp2RefKolmogorov"; }
-
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement *me);
 
 protected:
   
@@ -372,12 +353,10 @@ public:
   virtual void setAllowedXRange(float xmin, float xmax)
   { xmin_ = xmin; xmax_ = xmax; rangeInitialized_ = true; }
 
+  virtual float runMyTest(const MonitorElement *me) ;
+
   static std::string getAlgoName(void)
   { return "ContentsXRange"; }
-
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement *me) ;
 
 protected: 
   virtual void setMessage(void)
@@ -401,12 +380,14 @@ protected:
 class ContentsYRange : public SimpleTest
 {
 public:
-  ContentsYRange(const std::string &name) : SimpleTest(name)
+  ContentsYRange(const std::string &name) : SimpleTest(name,true)
   {
    rangeInitialized_ = false;
    deadChanAlgo_ = false;
    setAlgoName(getAlgoName());
   }
+
+  virtual float runMyTest(const MonitorElement *me);
 
   static std::string getAlgoName(void)
   { return "ContentsYRange"; }
@@ -415,9 +396,6 @@ public:
   virtual void setAllowedYRange(float ymin, float ymax)
   { ymin_ = ymin; ymax_ = ymax; rangeInitialized_ = true; }
 
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement *me);
 
 protected:
 
@@ -443,12 +421,15 @@ protected:
 class NoisyChannel : public SimpleTest
 {
 public:
-  NoisyChannel(const std::string &name) : SimpleTest(name)
+  NoisyChannel(const std::string &name) : SimpleTest(name,true)
   {
    rangeInitialized_ = false;
    numNeighbors_ = 1;
    setAlgoName(getAlgoName());
   }
+
+   /// run the test (result: fraction of channels not appearing noisy or "hot")
+  virtual float runMyTest(const MonitorElement*me);
 
   static std::string getAlgoName(void)
   { return "NoisyChannel"; }
@@ -475,10 +456,6 @@ public:
       }
     }
 
-public:
-  using SimpleTest::runTest;
-  /// run the test (result: fraction of channels not appearing noisy or "hot")
-  virtual float runMyTest(const MonitorElement*me);
 
 protected:
  
@@ -538,7 +515,7 @@ protected:
 class ContentsTH2FWithinRange : public SimpleTest
 {
 public:
-  ContentsTH2FWithinRange(const std::string &name) : SimpleTest(name)
+  ContentsTH2FWithinRange(const std::string &name) : SimpleTest(name,true)
     {
       checkMean_ = checkRMS_ = validMethod_ = false;
       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
@@ -546,6 +523,8 @@ public:
       toleranceMean_ = -1.0;
       setAlgoName(getAlgoName());
     }
+
+  virtual float runMyTest(const MonitorElement *me);
 
   static std::string getAlgoName(void)
   { return "ContentsWithinExpectedTH2F"; }
@@ -578,9 +557,7 @@ public:
       }
     }
 
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement *me);
+
 
 protected:
 
@@ -613,7 +590,7 @@ protected:
 class ContentsProfWithinRange : public SimpleTest
 {
 public:
-  ContentsProfWithinRange(const std::string &name) : SimpleTest(name)
+  ContentsProfWithinRange(const std::string &name) : SimpleTest(name,true)
     {
       checkMean_ = checkRMS_ = validMethod_ = false;
       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
@@ -621,6 +598,8 @@ public:
       toleranceMean_ = -1.0;
       setAlgoName(getAlgoName());
     }
+
+   virtual float runMyTest(const MonitorElement*me);
 
   static std::string getAlgoName(void)
   { return "ContentsWithinExpectedProf"; }
@@ -653,9 +632,6 @@ public:
       }
     }
 
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement*me);
 
 protected:
 
@@ -686,7 +662,7 @@ protected:
 class ContentsProf2DWithinRange : public SimpleTest
 {
 public:
-  ContentsProf2DWithinRange(const std::string &name) : SimpleTest(name)
+  ContentsProf2DWithinRange(const std::string &name) : SimpleTest(name,true)
     {
       checkMean_ = checkRMS_ = validMethod_ = false;
       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
@@ -694,6 +670,8 @@ public:
       toleranceMean_ = -1.0;
       setAlgoName(getAlgoName());
     }
+
+   virtual float runMyTest(const MonitorElement *me);
 
   static std::string getAlgoName(void)
   { return "ContentsWithinExpectedProf2D"; }
@@ -725,10 +703,6 @@ public:
 	checkMeanTolerance_ = true;
       }
     }
-
-public:
-  using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement *me);
 
 protected:
 
@@ -799,8 +773,8 @@ public:
     checkRange();
    }
 
-public:
-  using SimpleTest::runTest;
+
+  
   /** run the test;
       (a) if useRange is called: 1 if mean within allowed range, 0 otherwise
 
@@ -898,8 +872,6 @@ public:
   inline void   setXMax(double rdMAX)        { dXMax_ = rdMAX; }
   inline double getXMax(void) const          { return dXMax_;  }
 
-public:
-  using SimpleTest::runTest;
   /**
    * @brief
    *   Actual Run Test method. Should return: [0, 1] or <0 for failure.
@@ -1035,8 +1007,6 @@ public:
   double get_S_pass_obs(void)  	       { return S_pass_obs;  }
   int get_result(void)		       { return result; }
 
-public:
-  using SimpleTest::runTest;
   virtual float runMyTest(const MonitorElement *me);
 
 protected:
@@ -1069,8 +1039,6 @@ public:
   double get_S_pass_obs(void)	       { return S_pass_obs;  }
   int get_result(void)		       { return result; }
 
-public:
-  using SimpleTest::runTest;
   virtual float runMyTest(const MonitorElement *me );
 
 protected:
@@ -1116,8 +1084,6 @@ public:
   double get_FailedBins(void)          { return *FailedBins[2]; } // FIXME: WRONG! OFF BY ONE!?
   int get_result()                     { return result; }
 
-public:
-  using SimpleTest::runTest;
   virtual float runMyTest(const MonitorElement*me);
 
 protected:
@@ -1164,8 +1130,6 @@ public:
   double get_FailedBins(void)          { return *FailedBins[2]; } // FIXME: WRONG! OFF BY ONE!?
   int get_result()                     { return result; }
 
-public:
-  using SimpleTest::runTest;
   virtual float runMyTest(const MonitorElement*me);
 
 protected:
@@ -1197,8 +1161,6 @@ public:
   double get_S_pass_obs()  	       { return S_pass_obs;  }
   int get_result()		       { return result; }
 
-public:
-  using SimpleTest::runTest;
   virtual float runMyTest(const MonitorElement*me);
 
 protected:
@@ -1230,8 +1192,8 @@ public:
   double get_S_pass_obs()  	       { return S_pass_obs;  }
   int get_result()		       { return result; }
 
-public:
-  using SimpleTest::runTest;
+  //public:
+  //using SimpleTest::runTest;
   virtual float runMyTest(const MonitorElement*me); 
 
 protected:
