@@ -306,15 +306,15 @@ DQMNet::reinstateObject(DQMStore *store, Object &o)
   name.erase(0, name.rfind('/')+1);
   store->setCurrentFolder(folder);
   if (TProfile2D *t = dynamic_cast<TProfile2D *>(o.object))
-    store->cloneProfile2D(name, t);
+    store->bookProfile2D(name, t);
   else if (TProfile *t = dynamic_cast<TProfile *>(o.object))
-    store->cloneProfile(name, t);
+    store->bookProfile(name, t);
   else if (TH3F *t = dynamic_cast<TH3F *>(o.object))
-    store->clone3D(name, t);
+    store->book3D(name, t);
   else if (TH2F *t = dynamic_cast<TH2F *>(o.object))
-    store->clone2D(name, t);
+    store->book2D(name, t);
   else if (TH1F *t = dynamic_cast<TH1F *>(o.object))
-    store->clone1D(name, t);
+    store->book1D(name, t);
   else if (TObjString *t = dynamic_cast<TObjString *>(o.object))
   {
     RegexpMatch m;
@@ -875,15 +875,22 @@ DQMNet::onPeerData(IOSelectEvent *ev, Peer *p)
 	}
 	else
 	{
-	  // Create response and chain it to the write queue.
-	  Bucket **msg = &p->sendq;
-	  while (*msg)
-	    msg = &(*msg)->next;
-	  *msg = new Bucket;
-	  (*msg)->next = 0;
-
 	  // Decode and process this message.
-	  valid = onMessage(*msg, p, &data[0]+consumed, msglen);
+	  Bucket msg;
+	  msg.next = 0;
+	  valid = onMessage(&msg, p, &data[0]+consumed, msglen);
+
+	  // If we created a response, chain it to the write queue.
+	  if (! msg.data.empty())
+	  {
+	    Bucket **prev = &p->sendq;
+            while (*prev)
+               prev = &(*prev)->next;
+
+            *prev = new Bucket;
+            (*prev)->next = 0;
+            (*prev)->data.swap(msg.data);
+	  }
 	}
 
 	if (! valid)
