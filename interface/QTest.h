@@ -26,12 +26,12 @@ class ContentsYRange;			typedef ContentsYRange ContentsYRangeROOT;
 class NoisyChannel;			typedef NoisyChannel NoisyChannelROOT;
 class DeadChannel;			typedef DeadChannel DeadChannelROOT;
 
-class ContentsTH2FWithinRange;		typedef ContentsTH2FWithinRange ContentsTH2FWithinRangeROOT;
-class ContentsProfWithinRange;		typedef ContentsProfWithinRange ContentsProfWithinRangeROOT;
-class ContentsProf2DWithinRange;	typedef ContentsProf2DWithinRange ContentsProf2DWithinRangeROOT;
+//class ContentsTH2FWithinRange;		typedef ContentsTH2FWithinRange ContentsTH2FWithinRangeROOT;
+//class ContentsProfWithinRange;		typedef ContentsProfWithinRange ContentsProfWithinRangeROOT;
+//class ContentsProf2DWithinRange;	typedef ContentsProf2DWithinRange ContentsProf2DWithinRangeROOT;
 
 class MeanWithinExpected;		typedef MeanWithinExpected MeanWithinExpectedROOT;
-class MostProbableLandau;		typedef MostProbableLandau MostProbableLandauROOT;
+//class MostProbableLandau;		typedef MostProbableLandau MostProbableLandauROOT;
 
 class AllContentWithinFixedRange;	typedef AllContentWithinFixedRange RuleAllContentWithinFixedRange; typedef AllContentWithinFixedRange AllContentWithinFixedRangeROOT;
 class AllContentWithinFloatingRange;	typedef AllContentWithinFloatingRange RuleAllContentWithinFloatingRange;	typedef AllContentWithinFloatingRange AllContentWithinFloatingRangeROOT;
@@ -59,18 +59,6 @@ class QCriterion
   /// (class should be created by DQMStore class)
 
 public:
-  /// enable test
-  void enable(void)
-    { enabled_ = true; }
-
-  /// disable test
-  void disable(void)
-    { enabled_ = false; }
-
-  /// true if test is enabled
-  bool isEnabled(void) const
-    { return enabled_; }
-
   /// true if QCriterion has been modified since last time it ran
   bool wasModified(void) const
     { return wasModified_; }
@@ -114,13 +102,15 @@ protected:
   /// initialize values
   void init(void);
  
+  virtual float runTest(const MonitorElement *me) = 0;
+
   /// set algorithm name
   void setAlgoName(std::string name)
     { algoName_ = name; }
 
-  /// run test (result: [0, 1])
-  virtual float runTest(const MonitorElement *me) = 0;
-
+//   /// run test (result: [0, 1])
+//   virtual float runTest(const MonitorElement *me) = 0;
+// 
   float runTest(const MonitorElement *me, QReport &qr, DQMNet::QValue &qv)
     {
 
@@ -129,6 +119,11 @@ protected:
 
       //this runTest goes to SimpleTest
       float prob = runTest(me);
+      if (! validProb(prob_)) setInvalid();
+      else if (prob_ < errorProb_) status_ = dqm::qstatus::ERROR;
+      else if (prob_ < warningProb_) status_ = dqm::qstatus::WARNING;
+      else status_ = dqm::qstatus::STATUS_OK;
+      setMessage();
 
       qv.code = status_ ;
       qv.message = message_;
@@ -152,18 +147,6 @@ protected:
 
   /// set status & message for invalid tests
   void setInvalid(void);
-
-  /// set status & message for tests w/o enough statistics
-  void setNotEnoughStats(void);
-
-  /// set status & message for succesfull tests
-  void setOk(void);
-
-  /// set status & message for tests w/ warnings
-  void setWarning(void);
-
-  /// set status & message for tests w/ errors
-  void setError(void);
 
   /// set message after test has run
   virtual void setMessage(void) = 0;
@@ -213,29 +196,12 @@ class SimpleTest : public QCriterion
   virtual std::vector<DQMChannel> getBadChannels(void) const
   { return keepBadChannels_ ? badChannels_ : QCriterion::getBadChannels(); }
 
-  virtual float runMyTest(const MonitorElement *me)=0;
 
  protected:
 
- /// run the test on MonitorElement <me> (result: [0, 1] or <0 for failure)
- virtual float runTest(const MonitorElement *me)
- {
-      prob_ = runMyTest(me);
-      setStatusMessage();
-      return prob_;
- }
-
   /// set status & message after test has run
-  void setStatusMessage(void)
-    {
-      if (! validProb(prob_)) setInvalid();
-      else if (prob_ < errorProb_) setError();
-      else if (prob_ < warningProb_) setWarning();
-      else setOk();
-    }
 
-  virtual void setMessage(void)
-    {
+  virtual void setMessage(void) {
       std::ostringstream message;
       message << " Test " << this->qtname_ << " (" << this->algoName_
 	      << "): prob = " << this->prob_;
@@ -265,7 +231,7 @@ public:
 
 public:
 
-  virtual float runMyTest(const MonitorElement*me);
+  float runTest(const MonitorElement*me);
 
 protected:
     TH1*h    ; //define test histogram
@@ -282,15 +248,13 @@ public:
    Comp2RefChi2(const std::string &name) :SimpleTest(name)
    { setAlgoName(getAlgoName()); }
 
-   virtual float runMyTest(const MonitorElement*me);
-
+   float runTest(const MonitorElement*me);
    static std::string getAlgoName(void)
    { return "Comp2RefChi2"; }
   
 protected:
 
-  virtual void setMessage(void)
-    {
+  void setMessage(void) {
       std::ostringstream message;
       message << " Test " << qtname_ << " (" << algoName_
 	      << "): chi2/Ndof = " << chi2_ << "/" << Ndof_
@@ -318,7 +282,7 @@ public:
   Comp2RefKolmogorov(const std::string &name) : SimpleTest(name)
   { setAlgoName(getAlgoName()); }
 
-  virtual float runMyTest(const MonitorElement *me);
+  float runTest(const MonitorElement *me);
 
   static std::string getAlgoName(void)
   { return "Comp2RefKolmogorov"; }
@@ -353,14 +317,13 @@ public:
   virtual void setAllowedXRange(float xmin, float xmax)
   { xmin_ = xmin; xmax_ = xmax; rangeInitialized_ = true; }
 
-  virtual float runMyTest(const MonitorElement *me) ;
+  float runTest(const MonitorElement *me) ;
 
   static std::string getAlgoName(void)
   { return "ContentsXRange"; }
 
 protected: 
-  virtual void setMessage(void)
-    {
+  void setMessage(void) {
     std::ostringstream message;
     message << " Test " << qtname_ << " (" << algoName_
             << "): Entry fraction within X range = " << prob_;
@@ -387,7 +350,7 @@ public:
    setAlgoName(getAlgoName());
   }
 
-  virtual float runMyTest(const MonitorElement *me);
+  float runTest(const MonitorElement *me);
 
   static std::string getAlgoName(void)
   { return "ContentsYRange"; }
@@ -399,8 +362,7 @@ public:
 
 protected:
 
-  virtual void setMessage(void)
-    {
+  void setMessage(void) {
       std::ostringstream message;
       message << " Test " << qtname_ << " (" << algoName_
 	      << "): Bin fraction within Y range = " << prob_;
@@ -429,7 +391,7 @@ public:
   }
 
    /// run the test (result: fraction of channels not appearing noisy or "hot")
-  virtual float runMyTest(const MonitorElement*me);
+  float runTest(const MonitorElement*me);
 
   static std::string getAlgoName(void)
   { return "NoisyChannel"; }
@@ -459,8 +421,7 @@ public:
 
 protected:
  
-   virtual void setMessage(void)
-   {
+   void setMessage(void) {
       std::ostringstream message;
       message << " Test " << qtname_ << " (" << algoName_
 	      << "): Fraction of non-noisy channels = " << prob_;
@@ -479,8 +440,10 @@ protected:
   bool rangeInitialized_;  /*< init-flag for tolerance */
 };
 
+//----------------------------------------------------------------------------//
+//============================== DeadChannel =================================//
+//----------------------------------------------------------------------------//
 
-//==================== DeadChannel =========================//
 /// the ContentsYRange algorithm w/o a check for Ymax and excluding Ymin
 class DeadChannel : public ContentsYRange
 {
@@ -500,8 +463,7 @@ public:
  { return "DeadChannel"; }
 
 protected:
-  virtual void setMessage(void)
-    {
+  void setMessage(void) {
       std::ostringstream message;
       message << " Test " << qtname_ << " (" << algoName_
 	      << "): Alive channel fraction = " << prob_;
@@ -510,224 +472,221 @@ protected:
 };
 
 
-//==================== ContentsTH2FWithinRange  =========================//
-// Check that every TH2F channel has mean, RMS within allowed range.
-class ContentsTH2FWithinRange : public SimpleTest
-{
-public:
-  ContentsTH2FWithinRange(const std::string &name) : SimpleTest(name,true)
-    {
-      checkMean_ = checkRMS_ = validMethod_ = false;
-      minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
-      checkMeanTolerance_ = false;
-      toleranceMean_ = -1.0;
-      setAlgoName(getAlgoName());
-    }
-
-  virtual float runMyTest(const MonitorElement *me);
-
-  static std::string getAlgoName(void)
-  { return "ContentsWithinExpectedTH2F"; }
-
-  /// set expected value for mean
-  void setMeanRange(float xmin, float xmax)
-    {
-      checkRange(xmin, xmax);
-      minMean_ = xmin;
-      maxMean_ = xmax;
-      checkMean_ = true;
-    }
-
-  /// set expected value for mean
-  void setRMSRange(float xmin, float xmax)
-    {
-      checkRange(xmin, xmax);
-      minRMS_ = xmin;
-      maxRMS_ = xmax;
-      checkRMS_ = true;
-    }
-
-  /// set (fractional) tolerance for mean
-  void setMeanTolerance(float fracTolerance)
-    {
-      if (fracTolerance >= 0.0)
-      {
-	toleranceMean_ = fracTolerance;
-	checkMeanTolerance_ = true;
-      }
-    }
-
-
-
-protected:
-
-
-  TH2F*h    ; //define test histogram
-
-  virtual void setMessage(void)
-    {
-      std::ostringstream message;
-      message << " Test " << qtname_ << " (" << algoName_
-	      << "): Entry fraction within range = " << prob_;
-      message_ = message.str();
-    }
-
-  /// check that allowed range is logical
-  void checkRange(const float xmin, const float xmax);
-
-  bool checkMean_;	    //< if true, check the mean value
-  bool checkRMS_;           //< if true, check the RMS value
-  bool checkMeanTolerance_; //< if true, check mean tolerance
-  float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
-  float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
-  float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
-  bool validMethod_;        //< true if method has been chosen
-};
-
-
-//==================== ContentsProfWithinRange  =========================//
-/// Check that every TProf channel has mean, RMS within allowed range.
-class ContentsProfWithinRange : public SimpleTest
-{
-public:
-  ContentsProfWithinRange(const std::string &name) : SimpleTest(name,true)
-    {
-      checkMean_ = checkRMS_ = validMethod_ = false;
-      minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
-      checkMeanTolerance_ = false;
-      toleranceMean_ = -1.0;
-      setAlgoName(getAlgoName());
-    }
-
-   virtual float runMyTest(const MonitorElement*me);
-
-  static std::string getAlgoName(void)
-  { return "ContentsWithinExpectedProf"; }
-
-  /// set expected value for mean
-  void setMeanRange(float xmin, float xmax)
-    {
-      checkRange(xmin, xmax);
-      minMean_ = xmin;
-      maxMean_ = xmax;
-      checkMean_ = true;
-    }
-
-  /// set expected value for mean
-  void setRMSRange(float xmin, float xmax)
-    {
-      checkRange(xmin, xmax);
-      minRMS_ = xmin;
-      maxRMS_ = xmax;
-      checkRMS_ = true;
-    }
-
-  /// set (fractional) tolerance for mean
-  void setMeanTolerance(float fracTolerance)
-    {
-      if (fracTolerance >= 0.0)
-      {
-	toleranceMean_ = fracTolerance;
-	checkMeanTolerance_ = true;
-      }
-    }
-
-
-protected:
-
-  TProfile*h;
-
-  virtual void setMessage(void)
-    {
-      std::ostringstream message;
-      message << " Test " << qtname_ << " (" << algoName_
-	      << "): Entry fraction within range = " << prob_;
-      message_ = message.str();
-    }
-
-  /// check that allowed range is logical
-  void checkRange(const float xmin, const float xmax);
-
-  bool checkMean_;           //< if true, check the mean value
-  bool checkRMS_;            //< if true, check the RMS value
-  bool checkMeanTolerance_;  //< if true, check mean tolerance
-  float toleranceMean_;      //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
-  float minMean_, maxMean_;  //< allowed range for mean (use only if checkMean_ = true)
-  float minRMS_, maxRMS_;    //< allowed range for mean (use only if checkRMS_ = true)
-  bool validMethod_;         //< true if method has been chosen
-};
-
-//==================== ContentsProf2DWithinRange  =========================//
-/// Check that every TProfile2D channel has mean, RMS within allowed range.  
-class ContentsProf2DWithinRange : public SimpleTest
-{
-public:
-  ContentsProf2DWithinRange(const std::string &name) : SimpleTest(name,true)
-    {
-      checkMean_ = checkRMS_ = validMethod_ = false;
-      minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
-      checkMeanTolerance_ = false;
-      toleranceMean_ = -1.0;
-      setAlgoName(getAlgoName());
-    }
-
-   virtual float runMyTest(const MonitorElement *me);
-
-  static std::string getAlgoName(void)
-  { return "ContentsWithinExpectedProf2D"; }
-
-  /// set expected value for mean
-  void setMeanRange(float xmin, float xmax)
-    {
-      checkRange(xmin, xmax);
-      minMean_ = xmin;
-      maxMean_ = xmax;
-      checkMean_ = true;
-    }
-
-  /// set expected value for mean
-  void setRMSRange(float xmin, float xmax)
-    {
-      checkRange(xmin, xmax);
-      minRMS_ = xmin;
-      maxRMS_ = xmax;
-      checkRMS_ = true;
-    }
-
-  /// set (fractional) tolerance for mean
-  void setMeanTolerance(float fracTolerance)
-    {
-      if (fracTolerance >= 0.0)
-      {
-	toleranceMean_ = fracTolerance;
-	checkMeanTolerance_ = true;
-      }
-    }
-
-protected:
-
-  TProfile2D*h; //define Test histo
-
-  virtual void setMessage(void)
-    {
-      std::ostringstream message;
-      message << " Test " << qtname_ << " (" << algoName_
-	      << "): Entry fraction within range = " << prob_;
-      message_ = message.str();
-    }
-
-  /// check that allowed range is logical
-  void checkRange(const float xmin, const float xmax);
-
-  bool checkMean_;          //< if true, check the mean value
-  bool checkRMS_;           //< if true, check the RMS value
-  bool checkMeanTolerance_; //< if true, check mean tolerance
-  float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
-  float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
-  float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
-  bool validMethod_;        //< true if method has been chosen
-};
-
+// //==================== ContentsTH2FWithinRange  =========================//
+// // Check that every TH2F channel has mean, RMS within allowed range.
+// class ContentsTH2FWithinRange : public SimpleTest
+// {
+// public:
+//   ContentsTH2FWithinRange(const std::string &name) : SimpleTest(name,true)
+//     {
+//       checkMean_ = checkRMS_ = validMethod_ = false;
+//       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
+//       checkMeanTolerance_ = false;
+//       toleranceMean_ = -1.0;
+//       setAlgoName(getAlgoName());
+//     }
+// 
+//   float runTest(const MonitorElement *me);
+// 
+//   static std::string getAlgoName(void)
+//   { return "ContentsWithinExpectedTH2F"; }
+// 
+//   /// set expected value for mean
+//   void setMeanRange(float xmin, float xmax)
+//     {
+//       checkRange(xmin, xmax);
+//       minMean_ = xmin;
+//       maxMean_ = xmax;
+//       checkMean_ = true;
+//     }
+// 
+//   /// set expected value for mean
+//   void setRMSRange(float xmin, float xmax)
+//     {
+//       checkRange(xmin, xmax);
+//       minRMS_ = xmin;
+//       maxRMS_ = xmax;
+//       checkRMS_ = true;
+//     }
+// 
+//   /// set (fractional) tolerance for mean
+//   void setMeanTolerance(float fracTolerance)
+//     {
+//       if (fracTolerance >= 0.0)
+//       {
+// 	toleranceMean_ = fracTolerance;
+// 	checkMeanTolerance_ = true;
+//       }
+//     }
+// 
+// 
+// 
+// protected:
+// 
+// 
+//   TH2F*h    ; //define test histogram
+// 
+//   void setMessage(void) {
+//       std::ostringstream message;
+//       message << " Test " << qtname_ << " (" << algoName_
+// 	      << "): Entry fraction within range = " << prob_;
+//       message_ = message.str();
+//     }
+// 
+//   /// check that allowed range is logical
+//   void checkRange(const float xmin, const float xmax);
+// 
+//   bool checkMean_;	    //< if true, check the mean value
+//   bool checkRMS_;           //< if true, check the RMS value
+//   bool checkMeanTolerance_; //< if true, check mean tolerance
+//   float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
+//   float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
+//   float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
+//   bool validMethod_;        //< true if method has been chosen
+// };
+// 
+// 
+// //==================== ContentsProfWithinRange  =========================//
+// /// Check that every TProf channel has mean, RMS within allowed range.
+// class ContentsProfWithinRange : public SimpleTest
+// {
+// public:
+//   ContentsProfWithinRange(const std::string &name) : SimpleTest(name,true)
+//     {
+//       checkMean_ = checkRMS_ = validMethod_ = false;
+//       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
+//       checkMeanTolerance_ = false;
+//       toleranceMean_ = -1.0;
+//       setAlgoName(getAlgoName());
+//     }
+// 
+//    float runTest(const MonitorElement*me);
+// 
+//   static std::string getAlgoName(void)
+//   { return "ContentsWithinExpectedProf"; }
+// 
+//   /// set expected value for mean
+//   void setMeanRange(float xmin, float xmax)
+//     {
+//       checkRange(xmin, xmax);
+//       minMean_ = xmin;
+//       maxMean_ = xmax;
+//       checkMean_ = true;
+//     }
+// 
+//   /// set expected value for mean
+//   void setRMSRange(float xmin, float xmax)
+//     {
+//       checkRange(xmin, xmax);
+//       minRMS_ = xmin;
+//       maxRMS_ = xmax;
+//       checkRMS_ = true;
+//     }
+// 
+//   /// set (fractional) tolerance for mean
+//   void setMeanTolerance(float fracTolerance)
+//     {
+//       if (fracTolerance >= 0.0)
+//       {
+// 	toleranceMean_ = fracTolerance;
+// 	checkMeanTolerance_ = true;
+//       }
+//     }
+// 
+// 
+// protected:
+// 
+//   TProfile*h;
+// 
+//   void setMessage(void) {
+//       std::ostringstream message;
+//       message << " Test " << qtname_ << " (" << algoName_
+// 	      << "): Entry fraction within range = " << prob_;
+//       message_ = message.str();
+//     }
+// 
+//   /// check that allowed range is logical
+//   void checkRange(const float xmin, const float xmax);
+// 
+//   bool checkMean_;           //< if true, check the mean value
+//   bool checkRMS_;            //< if true, check the RMS value
+//   bool checkMeanTolerance_;  //< if true, check mean tolerance
+//   float toleranceMean_;      //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
+//   float minMean_, maxMean_;  //< allowed range for mean (use only if checkMean_ = true)
+//   float minRMS_, maxRMS_;    //< allowed range for mean (use only if checkRMS_ = true)
+//   bool validMethod_;         //< true if method has been chosen
+// };
+// 
+// //==================== ContentsProf2DWithinRange  =========================//
+// /// Check that every TProfile2D channel has mean, RMS within allowed range.  
+// class ContentsProf2DWithinRange : public SimpleTest
+// {
+// public:
+//   ContentsProf2DWithinRange(const std::string &name) : SimpleTest(name,true)
+//     {
+//       checkMean_ = checkRMS_ = validMethod_ = false;
+//       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
+//       checkMeanTolerance_ = false;
+//       toleranceMean_ = -1.0;
+//       setAlgoName(getAlgoName());
+//     }
+// 
+//    float runTest(const MonitorElement *me);
+// 
+//   static std::string getAlgoName(void)
+//   { return "ContentsWithinExpectedProf2D"; }
+// 
+//   /// set expected value for mean
+//   void setMeanRange(float xmin, float xmax)
+//     {
+//       checkRange(xmin, xmax);
+//       minMean_ = xmin;
+//       maxMean_ = xmax;
+//       checkMean_ = true;
+//     }
+// 
+//   /// set expected value for mean
+//   void setRMSRange(float xmin, float xmax)
+//     {
+//       checkRange(xmin, xmax);
+//       minRMS_ = xmin;
+//       maxRMS_ = xmax;
+//       checkRMS_ = true;
+//     }
+// 
+//   /// set (fractional) tolerance for mean
+//   void setMeanTolerance(float fracTolerance)
+//     {
+//       if (fracTolerance >= 0.0)
+//       {
+// 	toleranceMean_ = fracTolerance;
+// 	checkMeanTolerance_ = true;
+//       }
+//     }
+// 
+// protected:
+// 
+//   TProfile2D*h; //define Test histo
+// 
+//   void setMessage(void) {
+//       std::ostringstream message;
+//       message << " Test " << qtname_ << " (" << algoName_
+// 	      << "): Entry fraction within range = " << prob_;
+//       message_ = message.str();
+//     }
+// 
+//   /// check that allowed range is logical
+//   void checkRange(const float xmin, const float xmax);
+// 
+//   bool checkMean_;          //< if true, check the mean value
+//   bool checkRMS_;           //< if true, check the RMS value
+//   bool checkMeanTolerance_; //< if true, check mean tolerance
+//   float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
+//   float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
+//   float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
+//   bool validMethod_;        //< true if method has been chosen
+// };
+// 
 
 //==================== MeanWithinExpected  =========================//
 /// Algorithm for testing if histogram's mean value is near expected value.
@@ -787,13 +746,12 @@ public:
       for delta = 2, Prob = 4.55%
 
       (returns result in [0, 1] or <0 for failure) */
-  virtual float runMyTest(const MonitorElement*me);
+  float runTest(const MonitorElement*me);
 
 protected:
   bool isInvalid(void);
 
-  virtual void setMessage(void)
-    {
+  void setMessage(void) {
       std::ostringstream message;
       message << " Test " << qtname_ << " (" << algoName_ << "): ";
       if(useRange_)
@@ -836,155 +794,153 @@ protected:
 };
 
 
-//==================== MostProbableBase   =========================//
-// QTest that should test Most Probable value for some Expected number
-
-namespace edm {
-  namespace qtests {
-    namespace fits {
-      // Convert Significance into Probability value.
-      double erfc( const double &rdX);
-    }
-  }
-}
-
-
-/**
- * @brief
- *   Base for all MostProbables Children classes. Thus each child
- *   implementation will concentrate on fit itself.
- */
-class MostProbableBase : public SimpleTest
-{
-public:
-  MostProbableBase(const std::string &name);
-
-  // Set/Get local variables methods
-  inline void   setMostProbable(double rdMP) { dMostProbable_ = rdMP;}
-  inline double getMostProbable(void) const  { return dMostProbable_;}
-
-  inline void   setSigma(double rdSIGMA)     { dSigma_ = rdSIGMA; }
-  inline double getSigma(void) const         { return dSigma_; }
-
-  inline void   setXMin(double rdMIN)        { dXMin_ = rdMIN; }
-  inline double getXMin(void) const          { return dXMin_;  }
-
-  inline void   setXMax(double rdMAX)        { dXMax_ = rdMAX; }
-  inline double getXMax(void) const          { return dXMax_;  }
-
-  /**
-   * @brief
-   *   Actual Run Test method. Should return: [0, 1] or <0 for failure.
-   *   [Note: See SimpleTest<class T> template for details]
-   *
-   * @param poPLOT  Plot for Which QTest to be run
-   *
-   * @return
-   *   -1      On Error
-   *   [0, 1]  Measurement of how Fit value is close to Expected one
-   */
-  virtual float runMyTest(const MonitorElement*me);
-
-protected:
-  /**
-   * @brief
-   *   Each Child should implement fit method which responsibility is to
-   *   perform actual fit and compare mean value with some additional
-   *   Cuts if any needed. The reason this task is put into separate method
-   *   is that a priory it is unknown what distribution QTest is dealing with.
-   *   It might be simple Gauss, Landau or something more sophisticated.
-   *   Each Plot needs special treatment (fitting) and extraction of
-   *   parameters. Children know about that but not Parent class.
-   *
-   * @param poPLOT  Plot to be fitted
-   *
-   * @return
-   *   -1     On Error
-   *   [0,1]  Measurement of how close Fit Value is to Expected one
-   */
-
-  TH1F *poPLOT; //dine Test histo
-  virtual float fit(TH1F *poPLOT) = 0;
-
-  /**
-   * @brief
-   *   Child should check test if it is valid and return corresponding value
-   *   Next common tests are performed here:
-   *     1. min < max
-   *     2. MostProbable is in (min, max)
-   *     3. Sigma > 0
-   *
-   * @return
-   *   True   Invalid QTest
-   *   False  Otherwise
-   */
-  bool isInvalid(void);
-
-  /**
-   * @brief
-   *   General function that compares MostProbable value gotten from Fit and
-   *   Expected one.
-   *
-   * @param rdMP_FIT     MostProbable value gotten from Fit
-   * @param rdSIGMA_FIT  Sigma value gotten from Fit
-   *
-   * @return
-   *   Probability of found Value that measures how close is gotten one to
-   *   expected
-   */
-  double compareMostProbables(const double &rdMP_FIT, const double &rdSIGMA_FIT) const;
-
-
-  virtual void setMessage(void)
-    {
-      std::ostringstream message;
-      message << " Test " << qtname_ << " (" << algoName_
-	      << "): Fraction of Most Probable value match = " << prob_;
-      message_ = message.str();
-    }
-
-private:
-  // Most common Fit values
-  double dMostProbable_;
-  double dSigma_;
-  double dXMin_;
-  double dXMax_;
-};
-
-/** MostProbable QTest for Landau distributions */
-class MostProbableLandau : public MostProbableBase
-{
-public:
-  MostProbableLandau(const std::string &name);
-
-  static std::string getAlgoName()
-  { return "MostProbableLandau"; }
-
-  // Set/Get local variables methods
-  void setNormalization(const double &rdNORMALIZATION)
-  { dNormalization_ = rdNORMALIZATION; }
-
-  double getNormalization(void) const
-   { return dNormalization_; }
-
-protected:
-  //
-  // @brief
-  //   Perform Actual Fit
-  //
-  // @param poPLOT  Plot to be fitted
-  //
-  // @return
-  //   -1     On Error
-  //   [0,1]  Measurement of how close Fit Value is to Expected one
-  //
-  virtual float fit(TH1F *poPLOT);
-
-private:
-  double dNormalization_;
-};
-
-
+// //==================== MostProbableBase   =========================//
+// // QTest that should test Most Probable value for some Expected number
+// 
+// namespace edm {
+//   namespace qtests {
+//     namespace fits {
+//       // Convert Significance into Probability value.
+//       double erfc( const double &rdX);
+//     }
+//   }
+// }
+// 
+// 
+// /**
+//  * @brief
+//  *   Base for all MostProbables Children classes. Thus each child
+//  *   implementation will concentrate on fit itself.
+//  */
+// class MostProbableBase : public SimpleTest
+// {
+// public:
+//   MostProbableBase(const std::string &name);
+// 
+//   // Set/Get local variables methods
+//   inline void   setMostProbable(double rdMP) { dMostProbable_ = rdMP;}
+//   inline double getMostProbable(void) const  { return dMostProbable_;}
+// 
+//   inline void   setSigma(double rdSIGMA)     { dSigma_ = rdSIGMA; }
+//   inline double getSigma(void) const         { return dSigma_; }
+// 
+//   inline void   setXMin(double rdMIN)        { dXMin_ = rdMIN; }
+//   inline double getXMin(void) const          { return dXMin_;  }
+// 
+//   inline void   setXMax(double rdMAX)        { dXMax_ = rdMAX; }
+//   inline double getXMax(void) const          { return dXMax_;  }
+// 
+//   /**
+//    * @brief
+//    *   Actual Run Test method. Should return: [0, 1] or <0 for failure.
+//    *   [Note: See SimpleTest<class T> template for details]
+//    *
+//    * @param poPLOT  Plot for Which QTest to be run
+//    *
+//    * @return
+//    *   -1      On Error
+//    *   [0, 1]  Measurement of how Fit value is close to Expected one
+//    */
+//   float runTest(const MonitorElement*me);
+// 
+// protected:
+//   /**
+//    * @brief
+//    *   Each Child should implement fit method which responsibility is to
+//    *   perform actual fit and compare mean value with some additional
+//    *   Cuts if any needed. The reason this task is put into separate method
+//    *   is that a priory it is unknown what distribution QTest is dealing with.
+//    *   It might be simple Gauss, Landau or something more sophisticated.
+//    *   Each Plot needs special treatment (fitting) and extraction of
+//    *   parameters. Children know about that but not Parent class.
+//    *
+//    * @param poPLOT  Plot to be fitted
+//    *
+//    * @return
+//    *   -1     On Error
+//    *   [0,1]  Measurement of how close Fit Value is to Expected one
+//    */
+// 
+//   TH1F *poPLOT; //dine Test histo
+//   virtual float fit(TH1F *poPLOT) = 0;
+// 
+//   /**
+//    * @brief
+//    *   Child should check test if it is valid and return corresponding value
+//    *   Next common tests are performed here:
+//    *     1. min < max
+//    *     2. MostProbable is in (min, max)
+//    *     3. Sigma > 0
+//    *
+//    * @return
+//    *   True   Invalid QTest
+//    *   False  Otherwise
+//    */
+//   bool isInvalid(void);
+// 
+//   /**
+//    * @brief
+//    *   General function that compares MostProbable value gotten from Fit and
+//    *   Expected one.
+//    *
+//    * @param rdMP_FIT     MostProbable value gotten from Fit
+//    * @param rdSIGMA_FIT  Sigma value gotten from Fit
+//    *
+//    * @return
+//    *   Probability of found Value that measures how close is gotten one to
+//    *   expected
+//    */
+//   double compareMostProbables(const double &rdMP_FIT, const double &rdSIGMA_FIT) const;
+// 
+//   void setMessage(void) {
+//       std::ostringstream message;
+//       message << " Test " << qtname_ << " (" << algoName_
+// 	      << "): Fraction of Most Probable value match = " << prob_;
+//       message_ = message.str();
+//     }
+// 
+// private:
+//   // Most common Fit values
+//   double dMostProbable_;
+//   double dSigma_;
+//   double dXMin_;
+//   double dXMax_;
+// };
+// 
+// /** MostProbable QTest for Landau distributions */
+// class MostProbableLandau : public MostProbableBase
+// {
+// public:
+//   MostProbableLandau(const std::string &name);
+// 
+//   static std::string getAlgoName()
+//   { return "MostProbableLandau"; }
+// 
+//   // Set/Get local variables methods
+//   void setNormalization(const double &rdNORMALIZATION)
+//   { dNormalization_ = rdNORMALIZATION; }
+// 
+//   double getNormalization(void) const
+//    { return dNormalization_; }
+// 
+// protected:
+//   //
+//   // @brief
+//   //   Perform Actual Fit
+//   //
+//   // @param poPLOT  Plot to be fitted
+//   //
+//   // @return
+//   //   -1     On Error
+//   //   [0,1]  Measurement of how close Fit Value is to Expected one
+//   //
+//   virtual float fit(TH1F *poPLOT);
+// 
+// private:
+//   double dNormalization_;
+// };
+// 
+// 
 
 
 //==================== AllContentWithinFixedRange   =========================//
@@ -1007,7 +963,7 @@ public:
   double get_S_pass_obs(void)  	       { return S_pass_obs;  }
   int get_result(void)		       { return result; }
 
-  virtual float runMyTest(const MonitorElement *me);
+  float runTest(const MonitorElement *me);
 
 protected:
   TH1F *histogram ; //define Test histo
@@ -1039,7 +995,7 @@ public:
   double get_S_pass_obs(void)	       { return S_pass_obs;  }
   int get_result(void)		       { return result; }
 
-  virtual float runMyTest(const MonitorElement *me );
+  float runTest(const MonitorElement *me );
 
 protected:
   TH1F *histogram ; //define Test histo
@@ -1084,7 +1040,7 @@ public:
   double get_FailedBins(void)          { return *FailedBins[2]; } // FIXME: WRONG! OFF BY ONE!?
   int get_result()                     { return result; }
 
-  virtual float runMyTest(const MonitorElement*me);
+  float runTest(const MonitorElement*me);
 
 protected:
   TH1F *histogram; //define Test histogram
@@ -1130,7 +1086,7 @@ public:
   double get_FailedBins(void)          { return *FailedBins[2]; } // FIXME: WRONG! OFF BY ONE!?
   int get_result()                     { return result; }
 
-  virtual float runMyTest(const MonitorElement*me);
+  float runTest(const MonitorElement*me);
 
 protected:
   TH1F *histogram;
@@ -1161,7 +1117,7 @@ public:
   double get_S_pass_obs()  	       { return S_pass_obs;  }
   int get_result()		       { return result; }
 
-  virtual float runMyTest(const MonitorElement*me);
+  float runTest(const MonitorElement*me);
 
 protected:
   TH1F *histogram;
@@ -1171,7 +1127,6 @@ protected:
   double S_fail_obs, S_pass_obs;
   int result;
 };
-
 
 //==================== AllContentAlongDiagonal   =========================//
 #if 0 // FIXME: need to know what parameters to set before runTest!
@@ -1194,7 +1149,7 @@ public:
 
   //public:
   //using SimpleTest::runTest;
-  virtual float runMyTest(const MonitorElement*me); 
+  float runTest(const MonitorElement*me); 
 
 protected:
   TH2F *histogram;
