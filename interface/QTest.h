@@ -12,6 +12,8 @@
 
 #include "DQMServices/Core/interface/DQMStore.h"
 
+
+using namespace std;
 //class MonitorElement;
 class Comp2RefChi2;			typedef Comp2RefChi2 Comp2RefChi2ROOT;
 class Comp2RefKolmogorov;		typedef Comp2RefKolmogorov Comp2RefKolmogorovROOT;
@@ -102,7 +104,7 @@ protected:
   /// initialize values
   void init(void);
  
-  virtual float runTest(const MonitorElement *me) = 0;
+  virtual float runTest(const MonitorElement *me);
 
   /// set algorithm name
   void setAlgoName(std::string name)
@@ -118,12 +120,18 @@ protected:
       assert(qv.qtname == qtname_);
 
       //this runTest goes to SimpleTest
-      float prob = runTest(me);
+      prob_ = runTest(me);
       if (! validProb(prob_)) setInvalid();
       else if (prob_ < errorProb_) status_ = dqm::qstatus::ERROR;
       else if (prob_ < warningProb_) status_ = dqm::qstatus::WARNING;
       else status_ = dqm::qstatus::STATUS_OK;
       setMessage();
+      
+      cout << " Message:    " << message_ << endl;
+      cout << " Name = " << qtname_ << 
+              " Algorithm = " << algoName_ << 
+              "  Prob = " << prob_ << 
+	      "  Status = " << status_ << endl;
 
       qv.code = status_ ;
       qv.message = message_;
@@ -131,7 +139,7 @@ protected:
       qv.algorithm = algoName_;
       qr.badChannels_ = getBadChannels();
 
-      return prob;
+      return prob_;
     }
 
   /// call method when something in the algorithm changes
