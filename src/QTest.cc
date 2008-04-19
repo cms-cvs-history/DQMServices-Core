@@ -10,6 +10,8 @@
 //#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 
+using namespace std;
+
 const float QCriterion::ERROR_PROB_THRESHOLD = 0.50;
 const float QCriterion::WARNING_PROB_THRESHOLD = 0.90;
 
@@ -47,6 +49,11 @@ QCriterion::setInvalid(void)
   message_ = message.str();
 }
 
+float QCriterion::runTest(const MonitorElement *me)
+{
+  cout << " QCriterion:: virtual runTest method called " << endl;
+  return -1;
+}
 //===================================================//
 //================ QUALITY TESTS ====================//
 //==================================================//
@@ -62,29 +69,39 @@ QCriterion::setInvalid(void)
 
  if (!me) return -1;
 
+ int nbins=0;
+ int nbinsref=0;
  //-- TH1
  if (me->kind()==MonitorElement::DQM_KIND_TH1F){ 
-  h = me->getTH1F(); // access Test histo
-  ref_ = me->getRefTH1F(); //access Ref histo
-  if(!h || !ref_) return -1; 
+  nbins = me->getTH1F()->GetXaxis()->GetNbins(); 
+  nbinsref = me->getRefTH1F()->GetXaxis()->GetNbins();
+  h  = me->getTH1F(); // access Test histo
+  ref_ = me->getRefTH1F(); //access Ref hiso 
+  if (nbins != nbinsref) return -1;
  } 
  
  //-- TH2
  else if (me->kind()==MonitorElement::DQM_KIND_TH2F){ 
- TH2F *h_th2   = me->getTH2F(); // access Test histo
- TH2F *ref_th2 = me->getRefTH2F(); //access Ref hiso 
- h     = h_th2  ->ProjectionX(); 
- ref_  = ref_th2->ProjectionX();
- if(!h || !ref_) return -1; 
+  nbins = me->getTH2F()->GetXaxis()->GetNbins() *
+          me->getTH2F()->GetYaxis()->GetNbins();
+  nbinsref = me->getRefTH2F()->GetXaxis()->GetNbins() *
+             me->getRefTH2F()->GetYaxis()->GetNbins();
+  h  = me->getTH2F(); // access Test histo
+  ref_ = me->getRefTH2F(); //access Ref hiso 
+  if (nbins != nbinsref) return -1;
  } 
 
  //-- TH3
  else if (me->kind()==MonitorElement::DQM_KIND_TH3F){ 
- TH3F *h_th3 = me->getTH3F(); // access Test histo
- TH3F *ref_th3 = me->getRefTH3F(); //access Ref histo 
- h = h_th3  ->ProjectionZ();
- ref_  = ref_th3->ProjectionZ();
- if(!h || !ref_) return -1; 
+  nbins = me->getTH3F()->GetXaxis()->GetNbins() *
+          me->getTH3F()->GetYaxis()->GetNbins() *
+          me->getTH3F()->GetZaxis()->GetNbins();
+  nbinsref = me->getRefTH3F()->GetXaxis()->GetNbins() *
+             me->getRefTH3F()->GetYaxis()->GetNbins() *
+             me->getRefTH3F()->GetZaxis()->GetNbins();
+  h  = me->getTH3F(); // access Test histo
+  ref_ = me->getRefTH3F(); //access Ref hiso 
+  if (nbins != nbinsref) return -1;
  } 
 
  else{ 
@@ -92,30 +109,20 @@ QCriterion::setInvalid(void)
  return -1;
  } 
  
-  //-- isInvalid ? - Check consistency in number of channels
-  ncx1   = h->GetXaxis()->GetNbins(); 
-  ncx2   = ref_->GetXaxis()->GetNbins();
-  if (ncx1 != ncx2){
-  std::cout<<"Comp2RefEqualH ERROR: different number of channels! ("
-  << ncx1 << ", " << ncx2 << ") " << std::endl;
-  return -1;
-  } 
  //--  QUALITY TEST itself 
  Int_t first = 0; // 1 //(use underflow bin)
- Int_t last  = ncx1+1; // ncx1 //(use overflow bin)
+ Int_t last  = nbins+1; //(use overflow bin)
  bool failure = false;
-  for (Int_t bin=first;bin<=last;bin++)
-  {
+  for (Int_t bin=first;bin<=last;bin++) {
     float contents = h->GetBinContent(bin);
-    if (contents != ref_->GetBinContent(bin))
-    {
+    if (contents != ref_->GetBinContent(bin)) {
     failure = true;
     DQMChannel chan(bin, 0, 0, contents, h->GetBinError(bin));
     badChannels_.push_back(chan);
     }
   }
  if (failure) return 0;
- else         return 1;
+ return 1;
 }
 
 //-------------------------------------------------------//
@@ -388,13 +395,11 @@ float ContentsYRange::runTest(const MonitorElement*me)
  std::cout<< "ContentsYRange ERROR: ME does not contain TH1F" << std::endl; 
  return -1;} 
 
-
  TH1F *h = me->getTH1F(); //access Test histo
  if (!h) return -1;
 
 
  if (!rangeInitialized_ || !h->GetXaxis()) return 1; // all bins are accepted if no initialization
-
   Int_t ncx = h->GetXaxis()->GetNbins();
   // do NOT use underflow bin
   Int_t first = 1;
@@ -407,9 +412,10 @@ float ContentsYRange::runTest(const MonitorElement*me)
   {
     Double_t contents = h->GetBinContent(bin);
     bool failure = false;
-    if (deadChanAlgo_)
+    if (deadChanAlgo_) {
       // dead channel: equal to or less than ymin_
       failure = contents <= ymin_;
+    }
     else
       // allowed y-range: [ymin_, ymax_]
       failure = (contents < ymin_ || contents > ymax_);
