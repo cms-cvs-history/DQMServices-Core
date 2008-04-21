@@ -28,7 +28,8 @@ class ContentsYRange;			typedef ContentsYRange ContentsYRangeROOT;
 class NoisyChannel;			typedef NoisyChannel NoisyChannelROOT;
 class DeadChannel;			typedef DeadChannel DeadChannelROOT;
 
-//class ContentsTH2FWithinRange;		typedef ContentsTH2FWithinRange ContentsTH2FWithinRangeROOT;
+class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
+//class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
 //class ContentsProfWithinRange;		typedef ContentsProfWithinRange ContentsProfWithinRangeROOT;
 //class ContentsProf2DWithinRange;	typedef ContentsProf2DWithinRange ContentsProf2DWithinRangeROOT;
 
@@ -126,12 +127,14 @@ protected:
       else if (prob_ < warningProb_) status_ = dqm::qstatus::WARNING;
       else status_ = dqm::qstatus::STATUS_OK;
       setMessage();
-      
+     
+/* 
       cout << " Message:    " << message_ << endl;
       cout << " Name = " << qtname_ << 
               " Algorithm = " << algoName_ << 
               "  Prob = " << prob_ << 
 	      "  Status = " << status_ << endl;
+*/
 
       qv.code = status_ ;
       qv.message = message_;
@@ -480,221 +483,78 @@ protected:
 };
 
 
-// //==================== ContentsTH2FWithinRange  =========================//
-// // Check that every TH2F channel has mean, RMS within allowed range.
-// class ContentsTH2FWithinRange : public SimpleTest
-// {
-// public:
-//   ContentsTH2FWithinRange(const std::string &name) : SimpleTest(name,true)
-//     {
-//       checkMean_ = checkRMS_ = validMethod_ = false;
-//       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
-//       checkMeanTolerance_ = false;
-//       toleranceMean_ = -1.0;
-//       setAlgoName(getAlgoName());
-//     }
-// 
-//   float runTest(const MonitorElement *me);
-// 
-//   static std::string getAlgoName(void)
-//   { return "ContentsWithinExpectedTH2F"; }
-// 
-//   /// set expected value for mean
-//   void setMeanRange(float xmin, float xmax)
-//     {
-//       checkRange(xmin, xmax);
-//       minMean_ = xmin;
-//       maxMean_ = xmax;
-//       checkMean_ = true;
-//     }
-// 
-//   /// set expected value for mean
-//   void setRMSRange(float xmin, float xmax)
-//     {
-//       checkRange(xmin, xmax);
-//       minRMS_ = xmin;
-//       maxRMS_ = xmax;
-//       checkRMS_ = true;
-//     }
-// 
-//   /// set (fractional) tolerance for mean
-//   void setMeanTolerance(float fracTolerance)
-//     {
-//       if (fracTolerance >= 0.0)
-//       {
-// 	toleranceMean_ = fracTolerance;
-// 	checkMeanTolerance_ = true;
-//       }
-//     }
-// 
-// 
-// 
-// protected:
-// 
-// 
-//   TH2F*h    ; //define test histogram
-// 
-//   void setMessage(void) {
-//       std::ostringstream message;
-//       message << " Test " << qtname_ << " (" << algoName_
-// 	      << "): Entry fraction within range = " << prob_;
-//       message_ = message.str();
-//     }
-// 
-//   /// check that allowed range is logical
-//   void checkRange(const float xmin, const float xmax);
-// 
-//   bool checkMean_;	    //< if true, check the mean value
-//   bool checkRMS_;           //< if true, check the RMS value
-//   bool checkMeanTolerance_; //< if true, check mean tolerance
-//   float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
-//   float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
-//   float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
-//   bool validMethod_;        //< true if method has been chosen
-// };
-// 
-// 
-// //==================== ContentsProfWithinRange  =========================//
-// /// Check that every TProf channel has mean, RMS within allowed range.
-// class ContentsProfWithinRange : public SimpleTest
-// {
-// public:
-//   ContentsProfWithinRange(const std::string &name) : SimpleTest(name,true)
-//     {
-//       checkMean_ = checkRMS_ = validMethod_ = false;
-//       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
-//       checkMeanTolerance_ = false;
-//       toleranceMean_ = -1.0;
-//       setAlgoName(getAlgoName());
-//     }
-// 
-//    float runTest(const MonitorElement*me);
-// 
-//   static std::string getAlgoName(void)
-//   { return "ContentsWithinExpectedProf"; }
-// 
-//   /// set expected value for mean
-//   void setMeanRange(float xmin, float xmax)
-//     {
-//       checkRange(xmin, xmax);
-//       minMean_ = xmin;
-//       maxMean_ = xmax;
-//       checkMean_ = true;
-//     }
-// 
-//   /// set expected value for mean
-//   void setRMSRange(float xmin, float xmax)
-//     {
-//       checkRange(xmin, xmax);
-//       minRMS_ = xmin;
-//       maxRMS_ = xmax;
-//       checkRMS_ = true;
-//     }
-// 
-//   /// set (fractional) tolerance for mean
-//   void setMeanTolerance(float fracTolerance)
-//     {
-//       if (fracTolerance >= 0.0)
-//       {
-// 	toleranceMean_ = fracTolerance;
-// 	checkMeanTolerance_ = true;
-//       }
-//     }
-// 
-// 
-// protected:
-// 
-//   TProfile*h;
-// 
-//   void setMessage(void) {
-//       std::ostringstream message;
-//       message << " Test " << qtname_ << " (" << algoName_
-// 	      << "): Entry fraction within range = " << prob_;
-//       message_ = message.str();
-//     }
-// 
-//   /// check that allowed range is logical
-//   void checkRange(const float xmin, const float xmax);
-// 
-//   bool checkMean_;           //< if true, check the mean value
-//   bool checkRMS_;            //< if true, check the RMS value
-//   bool checkMeanTolerance_;  //< if true, check mean tolerance
-//   float toleranceMean_;      //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
-//   float minMean_, maxMean_;  //< allowed range for mean (use only if checkMean_ = true)
-//   float minRMS_, maxRMS_;    //< allowed range for mean (use only if checkRMS_ = true)
-//   bool validMethod_;         //< true if method has been chosen
-// };
-// 
-// //==================== ContentsProf2DWithinRange  =========================//
-// /// Check that every TProfile2D channel has mean, RMS within allowed range.  
-// class ContentsProf2DWithinRange : public SimpleTest
-// {
-// public:
-//   ContentsProf2DWithinRange(const std::string &name) : SimpleTest(name,true)
-//     {
-//       checkMean_ = checkRMS_ = validMethod_ = false;
-//       minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
-//       checkMeanTolerance_ = false;
-//       toleranceMean_ = -1.0;
-//       setAlgoName(getAlgoName());
-//     }
-// 
-//    float runTest(const MonitorElement *me);
-// 
-//   static std::string getAlgoName(void)
-//   { return "ContentsWithinExpectedProf2D"; }
-// 
-//   /// set expected value for mean
-//   void setMeanRange(float xmin, float xmax)
-//     {
-//       checkRange(xmin, xmax);
-//       minMean_ = xmin;
-//       maxMean_ = xmax;
-//       checkMean_ = true;
-//     }
-// 
-//   /// set expected value for mean
-//   void setRMSRange(float xmin, float xmax)
-//     {
-//       checkRange(xmin, xmax);
-//       minRMS_ = xmin;
-//       maxRMS_ = xmax;
-//       checkRMS_ = true;
-//     }
-// 
-//   /// set (fractional) tolerance for mean
-//   void setMeanTolerance(float fracTolerance)
-//     {
-//       if (fracTolerance >= 0.0)
-//       {
-// 	toleranceMean_ = fracTolerance;
-// 	checkMeanTolerance_ = true;
-//       }
-//     }
-// 
-// protected:
-// 
-//   TProfile2D*h; //define Test histo
-// 
-//   void setMessage(void) {
-//       std::ostringstream message;
-//       message << " Test " << qtname_ << " (" << algoName_
-// 	      << "): Entry fraction within range = " << prob_;
-//       message_ = message.str();
-//     }
-// 
-//   /// check that allowed range is logical
-//   void checkRange(const float xmin, const float xmax);
-// 
-//   bool checkMean_;          //< if true, check the mean value
-//   bool checkRMS_;           //< if true, check the RMS value
-//   bool checkMeanTolerance_; //< if true, check mean tolerance
-//   float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
-//   float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
-//   float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
-//   bool validMethod_;        //< true if method has been chosen
-// };
-// 
+//==================== ContentsWithinExpected  =========================//
+// Check that every TH2F channel has mean, RMS within allowed range.
+class ContentsWithinExpected : public SimpleTest
+{
+public:
+  ContentsWithinExpected(const std::string &name) : SimpleTest(name,true)
+    {
+      checkMean_ = checkRMS_ = validMethod_ = false;
+      minMean_ = maxMean_ = minRMS_ = maxRMS_ = 0.0;
+      checkMeanTolerance_ = false;
+      toleranceMean_ = -1.0;
+      setAlgoName(getAlgoName());
+    }
+
+  float runTest(const MonitorElement *me);
+
+  static std::string getAlgoName(void)
+  { return "ContentsWithinExpected"; }
+
+  /// set expected value for mean
+  void setMeanRange(float xmin, float xmax)
+    {
+      checkRange(xmin, xmax);
+      minMean_ = xmin;
+      maxMean_ = xmax;
+      checkMean_ = true;
+    }
+
+  /// set expected value for mean
+  void setRMSRange(float xmin, float xmax)
+    {
+      checkRange(xmin, xmax);
+      minRMS_ = xmin;
+      maxRMS_ = xmax;
+      checkRMS_ = true;
+    }
+
+  /// set (fractional) tolerance for mean
+  void setMeanTolerance(float fracTolerance)
+    {
+      if (fracTolerance >= 0.0)
+      {
+	toleranceMean_ = fracTolerance;
+	checkMeanTolerance_ = true;
+      }
+    }
+
+
+
+protected:
+
+
+  TH1*h    ; //define test histogram
+
+  void setMessage(void) {
+      std::ostringstream message;
+      message << " Test " << qtname_ << " (" << algoName_
+	      << "): Entry fraction within range = " << prob_;
+      message_ = message.str();
+    }
+
+  /// check that allowed range is logical
+  void checkRange(const float xmin, const float xmax);
+
+  bool checkMean_;	    //< if true, check the mean value
+  bool checkRMS_;           //< if true, check the RMS value
+  bool checkMeanTolerance_; //< if true, check mean tolerance
+  float toleranceMean_;     //< fractional tolerance on mean (use only if checkMeanTolerance_ = true)
+  float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
+  float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
+  bool validMethod_;        //< true if method has been chosen
+};
 
 //==================== MeanWithinExpected  =========================//
 /// Algorithm for testing if histogram's mean value is near expected value.

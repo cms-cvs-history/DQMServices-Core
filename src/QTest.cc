@@ -7,7 +7,6 @@
 #include <sstream>
 #include <math.h>
 
-//#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 
 using namespace std;
@@ -62,7 +61,7 @@ float QCriterion::runTest(const MonitorElement *me)
 //----------------- Comp2RefEqualH base -----------------//
 //-------------------------------------------------------//
 // run the test (result: [0, 1] or <0 for failure)
- float Comp2RefEqualH::runTest(const MonitorElement*me)
+float Comp2RefEqualH::runTest(const MonitorElement*me)
  {
    
  badChannels_.clear();
@@ -511,290 +510,158 @@ Double_t NoisyChannel::getAverage(int bin, const TH1F *h) const
 }
 
 
+//-----------------------------------------------------------//
+//----------------  ContentsWithinExpected ---------------------//
+//-----------------------------------------------------------//
+// run the test (result: fraction of channels that passed test);
+// [0, 1] or <0 for failure
+float ContentsWithinExpected::runTest(const MonitorElement*me)
+{
+  badChannels_.clear();
 
+  if (!me) return -1;
 
-// //----------------------------------------------------------------//
-// //----------------  ContentsTH2FWithinRange ---------------------//
-// //--------------------------------------------------------------//
-// // run the test (result: fraction of channels that passed test);
-// // [0, 1] or <0 for failure
-// float ContentsTH2FWithinRange::runTest(const MonitorElement*me)
-// {
-//   badChannels_.clear();
-// 
-//  if (!me) return -1;
-// 
-//  if (!me->kind()==MonitorElement::DQM_KIND_TH2F) { 
-//  std::cout<< " ContentsTH2FWithinRange ERROR: ME does not contain TH2F" << std::endl; 
-//  return -1;} 
-// 
-//   h = me->getTH2F(); //access Test histo
-//   if (!h) return -1;
-// 
-//   int ncx = h->GetXaxis()->GetNbins();
-//   int ncy = h->GetYaxis()->GetNbins();
-//   int fail = 0; int nsum = 0;
-//   float sum = 0.0; float average = 0.0;
-// 
-//   if (checkMeanTolerance_)
-//   { // calculate average value of all bin contents
-//     for (int cx = 1; cx <= ncx; ++cx)
-//     {
-//       for (int cy = 1; cy <= ncy; ++cy)
-//       {
-// 	sum += h->GetBinContent(h->GetBin(cx, cy));
-// 	++nsum;
-//       }
-//     }
-// 
-//     if (nsum > 0)  average = sum/nsum;
-// 
-//   } // calculate average value of all bin contents
-// 
-//   for (int cx = 1; cx <= ncx; ++cx)
-//   {
-//     for (int cy = 1; cy <= ncy; ++cy)
-//     {
-//       bool failMean = false;
-//       bool failRMS = false;
-//       bool failMeanTolerance = false;
-// 
-//       if (checkMean_)
-//       {
-//         float mean = h->GetBinContent(h->GetBin(cx, cy));
-//         failMean = (mean < minMean_ || mean > maxMean_);
-//       }
-// 
-//       if (checkRMS_)
-//       {
-//         float rms = h->GetBinError(h->GetBin(cx, cy));
-//         failRMS = (rms < minRMS_ || rms > maxRMS_);
-//       }
-// 
-//       if (checkMeanTolerance_)
-//       {
-//         float mean = h->GetBinContent(h->GetBin(cx, cy));
-//         failMeanTolerance = (TMath::Abs(mean - average) >
-// 			     toleranceMean_ * TMath::Abs(average));
-//       }
-// 
-//       if (failMean || failRMS || failMeanTolerance)
-//       {
-//         DQMChannel chan(cx, cy, 0, h->GetBinContent(h->GetBin(cx, cy)),
-// 			h->GetBinError(h->GetBin(cx, cy)));
-//         badChannels_.push_back(chan);
-//         ++fail;
-//       }
-//     }
-//   }
-// 
-//   return 1.*(ncx*ncy - fail)/(ncx*ncy);
-// }
-// 
-// // check that allowed range is logical
-// void
-// ContentsTH2FWithinRange::checkRange(const float xmin, const float xmax)
-// {
-//   if (xmin < xmax)
-//     validMethod_ = true;
-//   else
-//   {
-//     std::cerr << " *** Error! Illogical range: (" << xmin << ", " << xmax
-// 	      << ") in algorithm " << getAlgoName() << std::endl;
-//     validMethod_ = false;
-//   }
-// }
-// 
-// 
-// //----------------------------------------------------------------//
-// //----------------  ContentsProfWithinRange ---------------------//
-// //---------------------------------------------------------------//
-// // run the test (result: fraction of channels that passed test);
-// // [0, 1] or <0 for failure
-// 
-// float ContentsProfWithinRange::runTest(const MonitorElement*me)
-// {
-//  
-//  badChannels_.clear();
-//  if (!me) return -1;
-// 
-//  if (!me->kind()==MonitorElement::DQM_KIND_TPROFILE) { 
-//  std::cout<< " ContentsProfWithinRange ERROR: ME does not contain TProfile" << std::endl; 
-//  return -1;} 
-// 
-//   h = me->getTProfile(); //access Test histo
-//   if (!h) return -1;
-// 
-//   int ncx =  h->GetXaxis()->GetNbins();
-//   int fail = 0;
-//   int nsum = 0;
-//   float sum = 0.0;
-//   float average = 0.0;
-// 
-//   // calculate average value of all bin contents
-//   if (checkMeanTolerance_)
-//   {
-//     for (int cx = 1; cx <= ncx; ++cx)
-//     {
-//       if (h->GetBinEntries(h->GetBin(cx)) >= minEntries_/(ncx))
-//       {
-// 	sum += h->GetBinContent(h->GetBin(cx));
-// 	++nsum;
-//       }
-//     }
-// 
-//     if (nsum > 0)
-//       average = sum/nsum;
-//   }
-// 
-//   for (int cx = 1; cx <= ncx; ++cx)
-//   {
-//     bool failMean = false;
-//     bool failRMS = false;
-//     bool failMeanTolerance = false;
-// 
-//     if (h->GetBinEntries(h->GetBin(cx)) >= minEntries_/(ncx))
-//     {
-//       if (checkMean_)
-//       {
-// 	float mean = h->GetBinContent(h->GetBin(cx));
-// 	failMean = (mean < minMean_ || mean > maxMean_);
-//       }
-// 
-//       if (checkRMS_)
-//       {
-// 	float rms = h->GetBinError(h->GetBin(cx));
-// 	failRMS = (rms < minRMS_ || rms > maxRMS_);
-//       }
-// 
-//       if (checkMeanTolerance_)
-//       {
-// 	float mean = h->GetBinContent(h->GetBin(cx));
-// 	failMeanTolerance = (TMath::Abs(mean - average) >
-// 			     toleranceMean_ * TMath::Abs(average));
-//       }
-//     }
-// 
-//     if (failMean || failRMS || failMeanTolerance)
-//     {
-//       DQMChannel chan(cx, int(h->GetBinEntries(h->GetBin(cx))),
-// 		      0, h->GetBinContent(h->GetBin(cx)),
-// 		      h->GetBinError(h->GetBin(cx)));
-//       badChannels_.push_back(chan);
-//       ++fail;
-//     }
-//   }
-// 
-//   return 1.*(ncx - fail)/(ncx);
-// }
-// 
-// // check that allowed range is logical
-// void ContentsProfWithinRange::checkRange(const float xmin, const float xmax)
-// {
-//   if (xmin < xmax) validMethod_ = true;
-//   else
-//   {
-//     std::cout << " *** Error! Illogical range: (" << xmin << ", " << xmax
-// 	      << ") in algorithm " << getAlgoName() << std::endl;
-//     validMethod_ = false;
-//   }
-// }
-// 
-// //----------------------------------------------------------------//
-// //----------------  ContentsProf2DWithinRange ---------------------//
-// //---------------------------------------------------------------//
-// // run the test (result: fraction of channels that passed test);
-// // [0, 1] or <0 for failure
-// float ContentsProf2DWithinRange::runTest(const MonitorElement *me)
-// {
-//   badChannels_.clear();
-//   if (!me) return -1;
-// 
-//   if (!me->kind()==MonitorElement::DQM_KIND_TPROFILE2D) { 
-//   std::cout<< " ContentsProf2DWithinRange ERROR: ME does not contain TProfile2D" << std::endl; 
-//   return -1;} 
-// 
-//    h = me->getTProfile2D(); //access Test histo
-//    if (!h) return -1;
-// 
-//   int ncx = h->GetXaxis()->GetNbins();
-//   int ncy = h->GetYaxis()->GetNbins();
-//   int fail = 0; int nsum = 0;
-//   float sum = 0.0; float average = 0.0;
-// 
-//   // calculate average value of all bin contents
-//   if (checkMeanTolerance_)
-//   {
-//     for (int cx = 1; cx <= ncx; ++cx)
-//     {
-//       for (int cy = 1; cy <= ncy; ++cy)
-//       {
-// 	if (h->GetBinEntries(h->GetBin(cx, cy)) >= minEntries_/(ncx*ncy))
-// 	{
-// 	  sum += h->GetBinContent(h->GetBin(cx, cy));
-// 	  ++nsum;
-// 	}
-//       }
-//     }
-// 
-//     if (nsum > 0)
-//       average = sum/nsum;
-//   }
-// 
-//   for (int cx = 1; cx <= ncx; ++cx)
-//   {
-//     for (int cy = 1; cy <= ncy; ++cy)
-//     {
-//       bool failMean = false; bool failRMS = false; bool failMeanTolerance = false;
-// 
-//       if (h->GetBinEntries(h->GetBin(cx, cy)) >= minEntries_/(ncx*ncy))
-//       {
-// 	if (checkMean_)
-// 	{
-// 	  float mean = h->GetBinContent(h->GetBin(cx, cy));
-// 	  failMean = (mean < minMean_ || mean > maxMean_);
-// 	}
-// 
-// 	if (checkRMS_)
-// 	{
-// 	  float rms = h->GetBinError(h->GetBin(cx, cy));
-// 	  failRMS = (rms < minRMS_ || rms > maxRMS_);
-// 	}
-// 
-// 	if (checkMeanTolerance_)
-// 	{
-// 	  float mean = h->GetBinContent(h->GetBin(cx, cy));
-// 	  failMeanTolerance = (TMath::Abs(mean - average)
-// 			       > toleranceMean_ * TMath::Abs(average));
-// 	}
-//       }
-// 
-//       if (failMean || failRMS || failMeanTolerance)
-//       {
-// 	DQMChannel chan(cx, cy, int(h->GetBinEntries(h->GetBin(cx, cy))),
-// 			h->GetBinContent(h->GetBin(cx, cy)),
-// 			h->GetBinError(h->GetBin(cx, cy)));
-// 	badChannels_.push_back(chan);
-// 	++fail;
-//       }
-//     }
-//   }
-// 
-//   return 1.*(ncx*ncy - fail)/(ncx*ncy);
-// }
-// 
-// // check that allowed range is logical
-// void ContentsProf2DWithinRange::checkRange(const float xmin, const float xmax)
-// {
-//   if (xmin < xmax)
-//     validMethod_ = true;
-//   else
-//   {
-//     std::cout << " *** Error! Illogical range: (" << xmin << ", " << xmax
-// 	      << ") in algorithm " << getAlgoName() << std::endl;
-//     validMethod_ = false;
-//   }
-// }
+  int ncx;
+  int ncy;
+
+  //-- TH2
+  if (me->kind()==MonitorElement::DQM_KIND_TH2F){
+    ncx = me->getTH2F()->GetXaxis()->GetNbins();
+    ncy = me->getTH2F()->GetYaxis()->GetNbins();
+    h  = me->getTH2F(); // access Test histo
+  }
+
+  //-- TProfile
+  else if (me->kind()==MonitorElement::DQM_KIND_TPROFILE){
+    ncx = me->getTProfile()->GetXaxis()->GetNbins();
+    ncy = 1;
+    h  = me->getTProfile(); // access Test histo
+  }
+
+  //-- TProfile2D
+  else if (me->kind()==MonitorElement::DQM_KIND_TPROFILE2D){
+    ncx = me->getTProfile2D()->GetXaxis()->GetNbins();
+    ncy = me->getTProfile2D()->GetYaxis()->GetNbins();
+    h  = me->getTProfile2D(); // access Test histo
+  }
+
+  else{
+  std::cout<< " ContentsWithinExpected ERROR: ME does not contain TH2F/TPROFILE/TPROFILE2D" << std::endl; 
+  return -1;
+  } 
+
+  int nsum = 0;
+  float sum = 0.0;
+  float average = 0.0;
+
+  if (checkMeanTolerance_){ // calculate average value of all bin contents
+
+    for (int cx = 1; cx <= ncx; ++cx)
+    {
+      for (int cy = 1; cy <= ncy; ++cy)
+      {
+	if (me->kind() == MonitorElement::DQM_KIND_TH2F)
+	{
+	  sum += h->GetBinContent(h->GetBin(cx, cy));
+	  ++nsum;
+	}
+	else if (me->kind() == MonitorElement::DQM_KIND_TPROFILE)
+	{
+	  if (me->getTProfile()->GetBinEntries(h->GetBin(cx)) >= minEntries_/(ncx))
+	  {
+	    sum += h->GetBinContent(h->GetBin(cx));
+	    ++nsum;
+	  }
+	}
+	else if (me->kind() == MonitorElement::DQM_KIND_TPROFILE2D)
+	{
+	  if (me->getTProfile2D()->GetBinEntries(h->GetBin(cx, cy)) >= minEntries_/(ncx*ncy))
+	  {
+	    sum += h->GetBinContent(h->GetBin(cx, cy));
+	    ++nsum;
+	  }
+	}
+      }
+    }
+
+    if (nsum > 0) average = sum/nsum;
+
+  } // calculate average value of all bin contents
+
+  int fail = 0;
+
+  for (int cx = 1; cx <= ncx; ++cx)
+  {
+    for (int cy = 1; cy <= ncy; ++cy)
+    {
+      bool failMean = false;
+      bool failRMS = false;
+      bool failMeanTolerance = false;
+
+      if (me->kind() == MonitorElement::DQM_KIND_TPROFILE && me->getTProfile()->GetBinEntries(h->GetBin(cx)) < minEntries_/(ncx)) continue;
+
+      if (me->kind() == MonitorElement::DQM_KIND_TPROFILE2D && me->getTProfile2D()->GetBinEntries(h->GetBin(cx, cy)) < minEntries_/(ncx*ncy)) continue;
+
+      if (checkMean_)
+      {
+	float mean = h->GetBinContent(h->GetBin(cx, cy));
+        failMean = (mean < minMean_ || mean > maxMean_);
+      }
+
+      if (checkRMS_)
+      {
+	float rms = h->GetBinError(h->GetBin(cx, cy));
+        failRMS = (rms < minRMS_ || rms > maxRMS_);
+      }
+
+      if (checkMeanTolerance_)
+      {
+	float mean = h->GetBinContent(h->GetBin(cx, cy));
+        failMeanTolerance = (TMath::Abs(mean - average) > toleranceMean_*TMath::Abs(average));
+      }
+
+      if (failMean || failRMS || failMeanTolerance)
+      {
+	if (me->kind() == MonitorElement::DQM_KIND_TH2F) {
+          DQMChannel chan(cx, cy, 0,
+			  h->GetBinContent(h->GetBin(cx, cy)),
+			  h->GetBinError(h->GetBin(cx, cy)));
+          badChannels_.push_back(chan);
+	}
+	else if (me->kind() == MonitorElement::DQM_KIND_TPROFILE) {
+	  DQMChannel chan(cx, cy, int(me->getTProfile()->GetBinEntries(h->GetBin(cx))),
+			  0,
+			  h->GetBinError(h->GetBin(cx)));
+          badChannels_.push_back(chan);
+	}
+	else if (me->kind() == MonitorElement::DQM_KIND_TPROFILE2D) {
+	  DQMChannel chan(cx, cy, int(me->getTProfile2D()->GetBinEntries(h->GetBin(cx, cy))),
+			  h->GetBinContent(h->GetBin(cx, cy)),
+			  h->GetBinError(h->GetBin(cx, cy)));
+          badChannels_.push_back(chan);
+	}
+        ++fail;
+      }
+    }
+  }
+
+  return 1.*(ncx*ncy - fail)/(ncx*ncy);
+
+}
+
+// check that allowed range is logical
+void
+ContentsWithinExpected::checkRange(const float xmin, const float xmax)
+{
+  if (xmin < xmax)
+    validMethod_ = true;
+  else
+  {
+    std::cerr << " *** Error! Illogical range: (" << xmin << ", " << xmax
+	      << ") in algorithm " << getAlgoName() << std::endl;
+    validMethod_ = false;
+  }
+}
 
 //----------------------------------------------------------------//
 //--------------------  MeanWithinExpected  ---------------------//

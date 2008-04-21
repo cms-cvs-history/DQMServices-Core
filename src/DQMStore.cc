@@ -164,10 +164,8 @@ DQMStore::DQMStore(const edm::ParameterSet &pset)
   initQCriterion<Comp2RefEqualH>(qalgos_);
   initQCriterion<DeadChannel>(qalgos_);
   initQCriterion<NoisyChannel>(qalgos_);
+  initQCriterion<ContentsWithinExpected>(qalgos_);
   //initQCriterion<MostProbableLandau>(qalgos_);
-  //initQCriterion<ContentsTH2FWithinRange>(qalgos_);
-  //initQCriterion<ContentsProfWithinRange>(qalgos_);
-  //initQCriterion<ContentsProf2DWithinRange>(qalgos_);
 }
 
 DQMStore::~DQMStore(void)
