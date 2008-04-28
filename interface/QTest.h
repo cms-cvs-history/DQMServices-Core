@@ -276,8 +276,8 @@ protected:
       message_ = message.str();
     }
 
-  TH1F*h    ; //define test histogram
-  TH1F*ref_ ; // define ref histogram
+  TH1*h    ; //define test histogram
+  TH1*ref_ ; // define ref histogram
 
   // # of degrees of freedom and chi^2 for test
   int Ndof_; float chi2_;
@@ -300,8 +300,8 @@ public:
 
 protected:
   
-   TH1F*h    ; //define test histogram
-   TH1F*ref_ ; // define ref histogram
+   TH1*h    ; //define test histogram
+   TH1*ref_ ; // define ref histogram
 
   /// # of bins for test & reference histograms
   Int_t ncx1; Int_t ncx2;

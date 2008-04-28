@@ -137,8 +137,14 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
     ref_ = me->getRefTH1F(); //access Ref histo
     if(!h || !ref_) return -1; 
    } 
+   //-- TProfile
+   else if (me->kind()==MonitorElement::DQM_KIND_TPROFILE){
+    h = me->getTProfile(); // access Test histo
+    ref_ = me->getRefTProfile(); //access Ref histo
+    if(!h || !ref_) return -1;
+   } 
    else{ 
-    std::cout<< "Comp2RefChi2 ERROR: ME does not contain TH1F" << std::endl; 
+    std::cout<< "Comp2RefChi2 ERROR: ME does not contain TH1F/TProfile" << std::endl; 
     return -1;
    } 
 
@@ -222,8 +228,14 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
     ref_ = me->getRefTH1F(); //access Ref histo
     if(!h || !ref_) return -1; 
    } 
+   //-- TProfile
+   else if (me->kind()==MonitorElement::DQM_KIND_TPROFILE){
+    h = me->getTProfile(); // access Test histo
+    ref_ = me->getRefTProfile(); //access Ref histo
+    if(!h || !ref_) return -1;
+   }
    else{ 
-    std::cout<< "Comp2RefKolmogorov ERROR: ME does not contain TH1F" << std::endl; 
+    std::cout<< "Comp2RefKolmogorov ERROR: ME does not contain TH1F/TProfile" << std::endl; 
     return -1;
    } 
 
