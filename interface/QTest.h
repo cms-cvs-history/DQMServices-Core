@@ -24,11 +24,14 @@ class Comp2RefEqualH;			typedef Comp2RefEqualH Comp2RefEqualHROOT;
 //class Comp2RefEqualFloat;		typedef Comp2RefEqualFloat Comp2RefEqualFloatROOT;
 
 class ContentsXRange;			typedef ContentsXRange ContentsXRangeROOT;
+class ContentsXRangeAS;                   typedef ContentsXRangeAS ContentsXRangeASROOT;
 class ContentsYRange;			typedef ContentsYRange ContentsYRangeROOT;
+class ContentsYRangeAS;			typedef ContentsYRangeAS ContentsYRangeASROOT;
 class NoisyChannel;			typedef NoisyChannel NoisyChannelROOT;
 class DeadChannel;			typedef DeadChannel DeadChannelROOT;
 
 class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
+class ContentsWithinExpectedAS;		typedef ContentsWithinExpectedAS ContentsWithinExpectedASROOT;
 //class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
 //class ContentsProfWithinRange;		typedef ContentsProfWithinRange ContentsProfWithinRangeROOT;
 //class ContentsProf2DWithinRange;	typedef ContentsProf2DWithinRange ContentsProf2DWithinRangeROOT;
@@ -347,6 +350,41 @@ protected:
   bool rangeInitialized_;
 };
 
+//==================== ContentsXRange =========================//
+//== Check that histogram contents are between [Xmin, Xmax] ==//
+
+class ContentsXRangeAS : public SimpleTest
+{
+public:
+  ContentsXRangeAS(const std::string &name) : SimpleTest(name)
+  {
+      rangeInitialized_ = false;
+      setAlgoName(getAlgoName());
+  }
+
+  /// set allowed range in X-axis (default values: histogram's X-range)
+  virtual void setAllowedXRange(float xmin, float xmax)
+  { xmin_ = xmin; xmax_ = xmax; rangeInitialized_ = true; }
+
+  float runTest(const MonitorElement *me) ;
+
+  static std::string getAlgoName(void)
+  { return "ContentsXRangeAS"; }
+
+protected:
+  void setMessage(void) {
+    std::ostringstream message;
+    message << " Test " << qtname_ << " (" << algoName_
+            << "): Entry fraction within X range = " << prob_;
+    message_ = message.str();
+    }
+
+  /// allowed range in X-axis
+  float xmin_;float xmax_;
+  /// init-flag for xmin_, xmax_
+  bool rangeInitialized_;
+};
+
 
 //==================== ContentsYRange =========================//
 //== Check that histogram contents are between [Ymin, Ymax] ==//
@@ -365,6 +403,45 @@ public:
 
   static std::string getAlgoName(void)
   { return "ContentsYRange"; }
+
+  /// set allowed range in Y-axis (default values: histogram's FULL Y-range)
+  virtual void setAllowedYRange(float ymin, float ymax)
+  { ymin_ = ymin; ymax_ = ymax; rangeInitialized_ = true; }
+
+
+protected:
+
+  void setMessage(void) {
+      std::ostringstream message;
+      message << " Test " << qtname_ << " (" << algoName_
+	      << "): Bin fraction within Y range = " << prob_;
+      message_ = message.str();
+    }
+
+  /// allowed range in Y-axis
+  float ymin_; float ymax_;
+  /// to be used to run derived-class algorithm
+  bool deadChanAlgo_;
+  /// init-flag for ymin_, ymax_
+  bool rangeInitialized_;
+};
+
+//==================== ContentsYRangeAS =========================//
+//== Check that histogram contents are between [Ymin, Ymax] ==//
+class ContentsYRangeAS : public SimpleTest
+{
+public:
+  ContentsYRangeAS(const std::string &name) : SimpleTest(name,true)
+  {
+   rangeInitialized_ = false;
+   deadChanAlgo_ = false;
+   setAlgoName(getAlgoName());
+  }
+
+  float runTest(const MonitorElement *me);
+
+  static std::string getAlgoName(void)
+  { return "ContentsYRangeAS"; }
 
   /// set allowed range in Y-axis (default values: histogram's FULL Y-range)
   virtual void setAllowedYRange(float ymin, float ymax)
@@ -482,6 +559,49 @@ protected:
     }
 };
 
+
+//==================== ContentsWithinExpectedAS  =========================//
+// Check that every TH2F channels are within range
+class ContentsWithinExpectedAS : public SimpleTest
+{
+public:
+  ContentsWithinExpectedAS(const std::string &name) : SimpleTest(name,true)
+    {
+      rangeInitialized_ = false;
+      minCont_ = maxCont_ = 0.0;
+      setAlgoName(getAlgoName());
+    }
+
+  float runTest(const MonitorElement *me);
+
+  static std::string getAlgoName(void)
+  { return "ContentsWithinExpectedAS"; }
+
+  /// set expected value for contents
+  void setContentsRange(float xmin, float xmax)
+    {
+      minCont_ = xmin;
+      maxCont_ = xmax;
+      rangeInitialized_ = true;
+    }
+
+protected:
+
+   bool isInvalid(const TH2F *h)
+    { return false; } // any scenarios for invalid test?
+
+  TH1*h    ; //define test histogram
+
+  void setMessage(void) {
+      std::ostringstream message;
+      message << " Test " << qtname_ << " (" << algoName_
+	      << "): Entry fraction within range = " << prob_;
+      message_ = message.str();
+    }
+
+  float minCont_, maxCont_; //< allowed range 
+  bool rangeInitialized_;
+};
 
 //==================== ContentsWithinExpected  =========================//
 // Check that every TH2F channel has mean, RMS within allowed range.

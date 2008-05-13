@@ -159,12 +159,15 @@ DQMStore::DQMStore(const edm::ParameterSet &pset)
   initQCriterion<Comp2RefChi2>(qalgos_);
   initQCriterion<Comp2RefKolmogorov>(qalgos_);
   initQCriterion<ContentsXRange>(qalgos_);
+  initQCriterion<ContentsXRangeAS>(qalgos_);
   initQCriterion<ContentsYRange>(qalgos_);
+  initQCriterion<ContentsYRangeAS>(qalgos_);
   initQCriterion<MeanWithinExpected>(qalgos_);
   initQCriterion<Comp2RefEqualH>(qalgos_);
   initQCriterion<DeadChannel>(qalgos_);
   initQCriterion<NoisyChannel>(qalgos_);
   initQCriterion<ContentsWithinExpected>(qalgos_);
+  initQCriterion<ContentsWithinExpectedAS>(qalgos_);
   //initQCriterion<MostProbableLandau>(qalgos_);
 }
 
