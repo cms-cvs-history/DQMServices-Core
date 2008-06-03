@@ -24,14 +24,11 @@ class Comp2RefEqualH;			typedef Comp2RefEqualH Comp2RefEqualHROOT;
 //class Comp2RefEqualFloat;		typedef Comp2RefEqualFloat Comp2RefEqualFloatROOT;
 
 class ContentsXRange;			typedef ContentsXRange ContentsXRangeROOT;
-class ContentsXRangeAS;                   typedef ContentsXRangeAS ContentsXRangeASROOT;
 class ContentsYRange;			typedef ContentsYRange ContentsYRangeROOT;
-class ContentsYRangeAS;			typedef ContentsYRangeAS ContentsYRangeASROOT;
 class NoisyChannel;			typedef NoisyChannel NoisyChannelROOT;
 class DeadChannel;			typedef DeadChannel DeadChannelROOT;
 
 class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
-class ContentsWithinExpectedAS;		typedef ContentsWithinExpectedAS ContentsWithinExpectedASROOT;
 //class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
 //class ContentsProfWithinRange;		typedef ContentsProfWithinRange ContentsProfWithinRangeROOT;
 //class ContentsProf2DWithinRange;	typedef ContentsProf2DWithinRange ContentsProf2DWithinRangeROOT;
@@ -65,64 +62,40 @@ class QCriterion
   /// (class should be created by DQMStore class)
 
 public:
+
   /// true if QCriterion has been modified since last time it ran
-  bool wasModified(void) const
-    { return wasModified_; }
-
+  bool wasModified(void) const          { return wasModified_; }
   /// get test status (see Core/interface/DQMDefinitions.h)
-  int getStatus(void) const
-    { return status_; }
-
+  int getStatus(void) const             { return status_; }
   /// get message attached to test
-  std::string getMessage(void) const
-    { return message_; }
-
+  std::string getMessage(void) const    { return message_; }
   /// get name of quality test
-  std::string getName(void) const
-    { return qtname_; }
-
+  std::string getName(void) const       { return qtname_; }
   /// get algorithm name
-  std::string algoName(void) const
-    { return algoName_; }
-
+  std::string algoName(void) const      { return algoName_; }
   /// set probability limit for test warning (default: 90%)
-  void setWarningProb(float prob)
-    { if (validProb(prob)) warningProb_ = prob; }
-
+  void setWarningProb(float prob)       { if (validProb(prob)) warningProb_ = prob; }
   /// set probability limit for test error (default: 50%)
-  void setErrorProb(float prob)
-    { if (validProb(prob)) errorProb_ = prob; }
-
+  void setErrorProb(float prob)         { if (validProb(prob)) errorProb_ = prob; }
   /// get vector of channels that failed test
   /// (not relevant for all quality tests!)
   virtual std::vector<DQMChannel> getBadChannels(void) const
-    { return std::vector<DQMChannel>(); }
+                                        { return std::vector<DQMChannel>(); }
 
 protected:
-  QCriterion(std::string qtname)
-    { qtname_ = qtname; init(); }
-
-  virtual ~QCriterion(void)
-    {}
-
+  QCriterion(std::string qtname)        { qtname_ = qtname; init(); }
   /// initialize values
   void init(void);
- 
+
+  virtual ~QCriterion(void)             {}
+
   virtual float runTest(const MonitorElement *me);
-
   /// set algorithm name
-  void setAlgoName(std::string name)
-    { algoName_ = name; }
+  void setAlgoName(std::string name)    { algoName_ = name; }
 
-//   /// run test (result: [0, 1])
-//   virtual float runTest(const MonitorElement *me) = 0;
-// 
-  float runTest(const MonitorElement *me, QReport &qr, DQMNet::QValue &qv)
-    {
-
+  float runTest(const MonitorElement *me, QReport &qr, DQMNet::QValue &qv)   {
       assert(qr.qcriterion_ == this);
       assert(qv.qtname == qtname_);
-
       //this runTest goes to SimpleTest
       prob_ = runTest(me);
       if (! validProb(prob_)) setInvalid();
@@ -131,7 +104,7 @@ protected:
       else status_ = dqm::qstatus::STATUS_OK;
       setMessage();
      
-/* 
+/* // debug output
       cout << " Message:    " << message_ << endl;
       cout << " Name = " << qtname_ << 
               " Algorithm = " << algoName_ << 
@@ -149,19 +122,13 @@ protected:
     }
 
   /// call method when something in the algorithm changes
-  void update(void)
-    { wasModified_ = true; }
-
+  void update(void)                 { wasModified_ = true; }
   /// true if probability value is valid
-  bool validProb(float prob) const
-    { return prob >= 0 && prob <= 1; }
-
+  bool validProb(float prob) const  { return prob >= 0 && prob <= 1; }
   /// set status & message for disabled tests
   void setDisabled(void);
-
   /// set status & message for invalid tests
   void setInvalid(void);
-
   /// set message after test has run
   virtual void setMessage(void) = 0;
 
@@ -401,6 +368,8 @@ public:
 
   float runTest(const MonitorElement *me);
 
+  void setNormalTest(unsigned int normalTest) { normalTest_ = normalTest; }
+
   static std::string getAlgoName(void)
   { return "ContentsYRange"; }
 
@@ -424,47 +393,10 @@ protected:
   bool deadChanAlgo_;
   /// init-flag for ymin_, ymax_
   bool rangeInitialized_;
+  //do a Normal test or AS ?
+  unsigned int normalTest_;
+
 };
-
-//==================== ContentsYRangeAS =========================//
-//== Check that histogram contents are between [Ymin, Ymax] ==//
-class ContentsYRangeAS : public SimpleTest
-{
-public:
-  ContentsYRangeAS(const std::string &name) : SimpleTest(name,true)
-  {
-   rangeInitialized_ = false;
-   deadChanAlgo_ = false;
-   setAlgoName(getAlgoName());
-  }
-
-  float runTest(const MonitorElement *me);
-
-  static std::string getAlgoName(void)
-  { return "ContentsYRangeAS"; }
-
-  /// set allowed range in Y-axis (default values: histogram's FULL Y-range)
-  virtual void setAllowedYRange(float ymin, float ymax)
-  { ymin_ = ymin; ymax_ = ymax; rangeInitialized_ = true; }
-
-
-protected:
-
-  void setMessage(void) {
-      std::ostringstream message;
-      message << " Test " << qtname_ << " (" << algoName_
-	      << "): Bin fraction within Y range = " << prob_;
-      message_ = message.str();
-    }
-
-  /// allowed range in Y-axis
-  float ymin_; float ymax_;
-  /// to be used to run derived-class algorithm
-  bool deadChanAlgo_;
-  /// init-flag for ymin_, ymax_
-  bool rangeInitialized_;
-};
-
 
 //==================== NoisyChannel =========================//
 /// Check if any channels are noisy compared to neighboring ones.
@@ -528,10 +460,8 @@ protected:
   bool rangeInitialized_;  /*< init-flag for tolerance */
 };
 
-//----------------------------------------------------------------------------//
-//============================== DeadChannel =================================//
-//----------------------------------------------------------------------------//
 
+//============================== DeadChannel =================================//
 /// the ContentsYRange algorithm w/o a check for Ymax and excluding Ymin
 class DeadChannel : public ContentsYRange
 {
@@ -559,50 +489,6 @@ protected:
     }
 };
 
-
-//==================== ContentsWithinExpectedAS  =========================//
-// Check that every TH2F channels are within range
-class ContentsWithinExpectedAS : public SimpleTest
-{
-public:
-  ContentsWithinExpectedAS(const std::string &name) : SimpleTest(name,true)
-    {
-      rangeInitialized_ = false;
-      minCont_ = maxCont_ = 0.0;
-      setAlgoName(getAlgoName());
-    }
-
-  float runTest(const MonitorElement *me);
-
-  static std::string getAlgoName(void)
-  { return "ContentsWithinExpectedAS"; }
-
-  /// set expected value for contents
-  void setContentsRange(float xmin, float xmax)
-    {
-      minCont_ = xmin;
-      maxCont_ = xmax;
-      rangeInitialized_ = true;
-    }
-
-protected:
-
-   bool isInvalid(const TH2F *h)
-    { return false; } // any scenarios for invalid test?
-
-  TH1*h    ; //define test histogram
-
-  void setMessage(void) {
-      std::ostringstream message;
-      message << " Test " << qtname_ << " (" << algoName_
-	      << "): Entry fraction within range = " << prob_;
-      message_ = message.str();
-    }
-
-  float minCont_, maxCont_; //< allowed range 
-  bool rangeInitialized_;
-};
-
 //==================== ContentsWithinExpected  =========================//
 // Check that every TH2F channel has mean, RMS within allowed range.
 class ContentsWithinExpected : public SimpleTest
@@ -618,6 +504,9 @@ public:
     }
 
   float runTest(const MonitorElement *me);
+
+  void setNormalTest(unsigned int normalTest) { normalTest_ = normalTest; }
+
 
   static std::string getAlgoName(void)
   { return "ContentsWithinExpected"; }
@@ -674,6 +563,9 @@ protected:
   float minMean_, maxMean_; //< allowed range for mean (use only if checkMean_ = true)
   float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
   bool validMethod_;        //< true if method has been chosen
+  //do a Normal test or AS ?
+  unsigned int normalTest_;
+
 };
 
 //==================== MeanWithinExpected  =========================//
