@@ -368,7 +368,7 @@ public:
 
   float runTest(const MonitorElement *me);
 
-  void setNormalTest(unsigned int normalTest) { normalTest_ = normalTest; }
+  void setUseEmptyBins(unsigned int useEmptyBins) { useEmptyBins_ = useEmptyBins; }
 
   static std::string getAlgoName(void)
   { return "ContentsYRange"; }
@@ -394,7 +394,7 @@ protected:
   /// init-flag for ymin_, ymax_
   bool rangeInitialized_;
   //do a Normal test or AS ?
-  unsigned int normalTest_;
+  unsigned int useEmptyBins_;
 
 };
 
@@ -448,11 +448,11 @@ protected:
       message_ = message.str();
     }
 
-    TH1F*h    ; //define test histogram
+    TH1*h    ; //define test histogram
 
   /// get average for bin under consideration
   /// (see description of method setNumNeighbors)
-  Double_t getAverage(int bin, const TH1F *h) const;
+  Double_t getAverage(int bin, const TH1 *h) const;
 
   float tolerance_;        /*< tolerance for considering a channel noisy */
   unsigned numNeighbors_;  /*< # of neighboring channels for calculating average to be used
@@ -505,7 +505,7 @@ public:
 
   float runTest(const MonitorElement *me);
 
-  void setNormalTest(unsigned int normalTest) { normalTest_ = normalTest; }
+  void setUseEmptyBins(unsigned int useEmptyBins) { useEmptyBins_ = useEmptyBins; }
 
 
   static std::string getAlgoName(void)
@@ -564,7 +564,7 @@ protected:
   float minRMS_, maxRMS_;   //< allowed range for mean (use only if checkRMS_ = true)
   bool validMethod_;        //< true if method has been chosen
   //do a Normal test or AS ?
-  unsigned int normalTest_;
+  unsigned int useEmptyBins_;
 
 };
 
