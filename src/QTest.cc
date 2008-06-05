@@ -182,10 +182,15 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
   }
 
   //check that the histograms are not empty
-  if (sum1 == 0 || sum2 == 0){
-    std::cout << " Comp2RefChi2 ERROR: one of the histograms is empty" << std::endl;
+  if (sum1 == 0){
+    std::cout << "Comp2RefChi2 ERROR : Test Histogram " << h->GetName() << " is empty " << std::endl;
     return -1;
   }
+  if (sum2 == 0){
+    std::cout << "Comp2RefChi2 ERROR: Ref Histogram " << ref_->GetName() << " is empty " << std::endl;
+    return -1;
+  }
+
 
   Double_t bin1, bin2, err1, err2, temp;
   for (i=i_start; i<=i_end; i++){
@@ -239,7 +244,7 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
     std::cout<< "Comp2RefKolmogorov ERROR: ME does not contain TH1F/TProfile" << std::endl; 
     return -1;
    } 
-
+   
    //-- isInvalid ? - Check consistency in number of channels
   ncx1  = h->GetXaxis()->GetNbins(); 
   ncx2   = ref_->GetXaxis()->GetNbins();
@@ -270,11 +275,11 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
     w2   += ew2*ew2;
   }
   if (sum1 == 0){
-    std::cout << "Comp2RefKolmogorov ERROR: Histogram " << h->GetName() << " integral is zero" << std::endl;
+    std::cout << "Comp2RefKolmogorov ERROR: Test Histogram " << h->GetName() << " integral is zero" << std::endl;
     return -1;
   }
   if (sum2 == 0){
-    std::cout << "Comp2RefKolmogorov ERROR: Histogram " << ref_->GetName() << " integral is zero" << std::endl;
+    std::cout << "Comp2RefKolmogorov ERROR: Ref Histogram " << ref_->GetName() << " integral is zero" << std::endl;
     return -1;
   }
 
