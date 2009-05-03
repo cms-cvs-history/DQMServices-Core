@@ -1910,11 +1910,13 @@ DQMStore::runQTests(void)
     if (mi->first.compare(0, s_referenceDirName.size(), s_referenceDirName))
       mi->second.runQTests();
 
+/* removed for new QTest (tag abm-090503)
   // Reset "modified" flag on all quality tests. // FIXME: remove ?
   QCMap::iterator qi = qtests_.begin();
   QCMap::iterator qe = qtests_.end();
   for ( ; qi != qe; ++qi)
     qi->second->wasModified_ = false;
+*/
 
   reset_ = false;
 }
