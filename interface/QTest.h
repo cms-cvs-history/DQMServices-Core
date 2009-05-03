@@ -59,6 +59,7 @@ public:
   /// set probability limit for warning and error (default: 90% and 50%)
   void setWarningProb(float prob)       { warningProb_ = prob; }
   void setErrorProb(float prob)         { errorProb_ = prob; }
+  void setVerbose(int verbose)          { verbose_ = verbose; }
   /// get vector of channels that failed test
   /// (not relevant for all quality tests!)
   virtual std::vector<DQMChannel> getBadChannels(void) const
@@ -79,15 +80,16 @@ protected:
       assert(qr.qcriterion_ == this);
       assert(qv.qtname == qtname_);
 
-      prob_ = runTest(me); //this runTest goes to SimpleTest
+      prob_ = runTest(me); // this runTest goes to SimpleTest derivates
 
       if (prob_ < errorProb_) status_ = dqm::qstatus::ERROR;
       else if (prob_ < warningProb_) status_ = dqm::qstatus::WARNING;
       else status_ = dqm::qstatus::STATUS_OK;
-      setMessage();
+
+      setMessage(); // this goes to SimpleTest derivates
      
-      if (verbose_) std::cout << " Message = " << message_ << std::endl;
-      if (verbose_) std::cout << " Name = " << qtname_ << 
+      if (verbose_==2) std::cout << " Message = " << message_ << std::endl;
+      if (verbose_==2) std::cout << " Name = " << qtname_ << 
               " / Algorithm = " << algoName_ << 
 	      " / Status = " << status_ << 
               " / Prob = " << prob_ << std::endl;
@@ -111,7 +113,7 @@ protected:
   int status_;  /// quality test status
   std::string message_;  /// message attached to test
   float warningProb_, errorProb_;  /// probability limits for warnings, errors
-  bool verbose_;  
+  int verbose_;  
 
 private:
   /// default "probability" values for setting warnings & errors when running tests
@@ -438,37 +440,15 @@ class MeanWithinExpected : public SimpleTest
 public:
   MeanWithinExpected(const std::string &name) : SimpleTest(name)
   {
-    validExpMean_ = false;
     setAlgoName(getAlgoName());
   }
   static std::string getAlgoName(void) { return "MeanWithinExpected"; }
   float runTest(const MonitorElement*me);
 
-  void setExpectedMean(float expMean) 
-  { 
-    expMean_ = expMean;
-    validExpMean_ = true;
-  }
-  void useRMS(void) 
-  { 
-    useRMS_ = true; 
-    useSigma_ = useRange_ = false; 
-  }
-  void useSigma(float expectedSigma);
+  void setExpectedMean(float mean) { expMean_ = mean; }
   void useRange(float xmin, float xmax);
-
-  /** run the test;
-      (a) if useRange is called: 1 if mean within allowed range, 0 otherwise
-
-      (b) is useRMS or useSigma is called: result is the probability
-      Prob(chi^2, ndof=1) that the mean of histogram will be deviated by more than
-      +/- delta from <expected_mean>, where delta = mean - <expected_mean>, and
-      chi^2 = (delta/sigma)^2. sigma is the RMS of the histogram ("useRMS") or
-      <expected_sigma> ("useSigma")
-      e.g. for delta = 1, Prob = 31.7%
-      for delta = 2, Prob = 4.55%
-
-      (returns result in [0, 1] or <0 for failure) */
+  void useSigma(float expectedSigma);
+  void useRMS(void) ;
 
 protected:
 
@@ -490,16 +470,12 @@ protected:
     message_ = message.str();
   }
 
-  /// test assuming mean value is quantity with gaussian errors
-  float doGaussTest(const TH1 *h, float sigma);
-
   bool useRMS_;       //< if true, will use RMS of distribution
   bool useSigma_;     //< if true, will use expected_sigma
   bool useRange_;     //< if true, will use allowed range
   float sigma_;       //< sigma to be used in probability calculation (use only if useSigma_ = true)
   float expMean_;     //< expected mean value (used only if useSigma_ = true or useRMS_ = true)
   float xmin_, xmax_; //< allowed range for mean (use only if useRange_ = true)
-  bool validExpMean_; //< true if expected mean has been chosen
 
 };
 

@@ -23,7 +23,7 @@ QCriterion::init(void)
   setAlgoName("NO_ALGORITHM");
   status_ = dqm::qstatus::DID_NOT_RUN;
   message_ = "NO_MESSAGE";
-  verbose_ = true;
+  verbose_ = 0; // 0 = silent, 1 = algorithmic failures, 2 = info
 }
 
 float QCriterion::runTest(const MonitorElement *me)
@@ -49,8 +49,9 @@ float Comp2RefEqualH::runTest(const MonitorElement*me)
   TH1* h=0; //initialize histogram pointer
   TH1* ref_=0;
   
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
 
   int nbins=0;
   int nbinsref=0;
@@ -112,8 +113,9 @@ float Comp2RefEqualH::runTest(const MonitorElement*me)
 
   else
   { 
-    std::cout << "QTest:Comp2RefEqualH" 
-      << " ME does not contain TH1F/TH1S/TH2F/TH2S/TH3F, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefEqualH" 
+                << " ME does not contain TH1F/TH1S/TH2F/TH2S/TH3F, exiting\n"; 
     return -1;
   } 
 
@@ -131,7 +133,6 @@ float Comp2RefEqualH::runTest(const MonitorElement*me)
       badChannels_.push_back(chan);
     }
   }
-  std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
   if (failure) return 0;
   return 1;
 }
@@ -148,8 +149,9 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
   TH1* h=0;
   TH1* ref_=0;
  
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
   //-- TH1F
   if (me->kind()==MonitorElement::DQM_KIND_TH1F)
   { 
@@ -170,8 +172,9 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
   } 
   else
   { 
-    std::cout << "QTest::Comp2RefChi2"
-      << " ME does not contain TH1F/TH1S/TProfile, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest::Comp2RefChi2"
+                << " ME does not contain TH1F/TH1S/TProfile, exiting\n"; 
     return -1;
   } 
 
@@ -180,9 +183,10 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
   Int_t ncx2  = ref_->GetXaxis()->GetNbins();
   if ( ncx1 !=  ncx2)
   {
-    std::cout << "QTest:Comp2RefChi2"
-      << " different number of channels! ("
-      << ncx1 << ", " << ncx2 << "), exiting " << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefChi2"
+                << " different number of channels! ("
+                << ncx1 << ", " << ncx2 << "), exiting\n";
     return -1;
   } 
 
@@ -212,15 +216,18 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
   //check that the histograms are not empty
   if (sum1 == 0)
   {
-    std::cout << "QTest:Comp2RefChi2"
-      << " Test Histogram " << h->GetName() << " is empty, exiting " << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefChi2"
+                << " Test Histogram " << h->GetName() 
+		<< " is empty, exiting\n";
     return -1;
   }
   if (sum2 == 0)
   {
-    std::cout << "QTest:Comp2RefChi2"
-      << " Ref Histogram " << ref_->GetName() 
-      << " is empty, exiting " << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefChi2"
+                << " Ref Histogram " << ref_->GetName() 
+                << " is empty, exiting\n";
     return -1;
   }
 
@@ -239,8 +246,9 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
       err1=h->GetBinError(i); err2=ref_->GetBinError(i);
       if (err1 == 0 && err2 == 0)
       {
-	std::cout << "QTest:Comp2RefChi2"
-	  << " bins with non-zero content and zero error, exiting" << "\n";
+	if (verbose_>0) 
+	  std::cout << "QTest:Comp2RefChi2"
+	            << " bins with non-zero content and zero error, exiting\n";
 	return -1;
       }
       err1*=err1      ; err2*=err2;
@@ -249,7 +257,6 @@ float Comp2RefChi2::runTest(const MonitorElement *me)
     }
   }
   chi2_ = chi2;  Ndof_ = ndof;
-  std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
   return TMath::Prob(0.5*chi2, Int_t(0.5*ndof));
 }
 
@@ -268,8 +275,9 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   TH1* h=0;
   TH1* ref_=0;
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
   //-- TH1F
   if (me->kind()==MonitorElement::DQM_KIND_TH1F)
   { 
@@ -290,8 +298,9 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   }
   else
   { 
-    std::cout << "QTest:Comp2RefKolmogorov"
-      << " ME does not contain TH1F/TH1S/TProfile, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov"
+                << " ME does not contain TH1F/TH1S/TProfile, exiting\n"; 
     return -1;
   } 
    
@@ -300,9 +309,10 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   Int_t ncx2 = ref_->GetXaxis()->GetNbins();
   if ( ncx1 !=  ncx2)
   {
-    std::cout << "QTest:Comp2RefKolmogorov"
-      << " different number of channels! ("
-      << ncx1 << ", " << ncx2 << "), exiting " << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov"
+                << " different number of channels! ("
+                << ncx1 << ", " << ncx2 << "), exiting\n";
     return -1;
   } 
   //-- isInvalid ? - Check consistency in channel edges
@@ -310,8 +320,9 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   Double_t diff2 = TMath::Abs(h->GetXaxis()->GetXmax() - ref_->GetXaxis()->GetXmax());
   if (diff1 > difprec || diff2 > difprec)
   {
-    std::cout << "QTest:Comp2RefKolmogorov"
-      << " histograms with different binning, exiting" << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov"
+                << " histograms with different binning, exiting\n";
     return -1;
   }
 
@@ -332,16 +343,18 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   
   if (sum1 == 0)
   {
-    std::cout << "QTest:Comp2RefKolmogorov"
-      << " Test Histogram: " << h->GetName() 
-      << ": integral is zero, exiting" << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov"
+                << " Test Histogram: " << h->GetName() 
+                << ": integral is zero, exiting\n";
     return -1;
   }
   if (sum2 == 0)
   {
-    std::cout << "QTest:Comp2RefKolmogorov"
-      << " Ref Histogram: " << ref_->GetName() 
-      << ": integral is zero, exiting" << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov"
+                << " Ref Histogram: " << ref_->GetName() 
+                << ": integral is zero, exiting\n";
     return -1;
   }
 
@@ -362,9 +375,10 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   if (difsum1 > difprec && Int_t(ne1) != ncx1)
   {
     if (h->GetSumw2N() == 0)
-      std::cout << "QTest:Comp2RefKolmogorov"
-        << " Weighted events and no Sumw2 for "
-	<< h->GetName() << "\n";
+      if (verbose_>0) 
+        std::cout << "QTest:Comp2RefKolmogorov"
+                  << " Weighted events and no Sumw2 for "
+	          << h->GetName() << "\n";
     else
       esum1 = sum1*sum1/w1;  //number of equivalent entries
   }
@@ -374,23 +388,22 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
   if (difsum2 > difprec && Int_t(ne2) != ncx1)
   {
     if (ref_->GetSumw2N() == 0)
-      std::cout << "QTest:Comp2RefKolmogorov"
-        << " Weighted events and no Sumw2 for "
-	<< ref_->GetName() << "\n";
+      if (verbose_>0) 
+        std::cout << "QTest:Comp2RefKolmogorov"
+                  << " Weighted events and no Sumw2 for "
+	          << ref_->GetName() << "\n";
     else
       esum2 = sum2*sum2/w2;  //number of equivalent entries
   }
 
   Double_t s1 = 1/tsum1; Double_t s2 = 1/tsum2;
-
   // Find largest difference for Kolmogorov Test
   Double_t dfmax =0, rsum1 = 0, rsum2 = 0;
-
   // use underflow bin
   Int_t first = 0; // 1
   // use overflow bin
   Int_t last  = ncx1+1; // ncx1
-  for (bin=first;bin<=last;bin++)
+  for ( bin=first; bin<=last; bin++)
   {
     rsum1 += s1*h->GetBinContent(bin);
     rsum2 += s2*ref_->GetBinContent(bin);
@@ -405,15 +418,16 @@ float Comp2RefKolmogorov::runTest(const MonitorElement *me)
 
   // This numerical error condition should never occur:
   if (TMath::Abs(rsum1-1) > 0.002)
-    std::cout << "QTest:Comp2RefKolmogorov" 
-      << " Numerical problems with histogram "
-      << h->GetName() << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov" 
+                << " Numerical problems with histogram "
+                << h->GetName() << "\n";
   if (TMath::Abs(rsum2-1) > 0.002)
-    std::cout << "QTest:Comp2RefKolmogorov" 
-      << " Numerical problems with histogram "
-      << ref_->GetName() << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:Comp2RefKolmogorov" 
+                << " Numerical problems with histogram "
+                << ref_->GetName() << "\n";
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
   return TMath::KolmogorovProb(z);
 }
 
@@ -430,8 +444,9 @@ float ContentsXRange::runTest(const MonitorElement*me)
     return -1;
   TH1* h=0; 
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
   // -- TH1F
   if (me->kind()==MonitorElement::DQM_KIND_TH1F ) 
   {
@@ -444,10 +459,10 @@ float ContentsXRange::runTest(const MonitorElement*me)
   } 
   else 
   {
-    std::cout << "QTest:ContentsXRange"
-      << " ME " << me->getFullname() 
-      << " does not contain TH1F/TH1S, exiting" << "\n"; 
-      return -1;
+    if (verbose_>0) std::cout << "QTest:ContentsXRange"
+         << " ME " << me->getFullname() 
+         << " does not contain TH1F/TH1S, exiting\n"; 
+    return -1;
   } 
 
   if (!rangeInitialized_)
@@ -475,7 +490,6 @@ float ContentsXRange::runTest(const MonitorElement*me)
     if (x < xmin_ || x > xmax_)fail += contents;
   }
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
   if (sum==0) return 1;
   // return fraction of entries within allowed X-range
   return (sum - fail)/sum; 
@@ -495,8 +509,9 @@ float ContentsYRange::runTest(const MonitorElement*me)
     return -1;
   TH1* h=0; 
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
 
   if (me->kind()==MonitorElement::DQM_KIND_TH1F) 
   { 
@@ -508,9 +523,10 @@ float ContentsYRange::runTest(const MonitorElement*me)
   } 
   else 
   {
-    std::cout << "QTest:ContentsYRange" 
-      << " ME " << me->getFullname() 
-      << " does not contain TH1F/TH1S, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:ContentsYRange" 
+                << " ME " << me->getFullname() 
+                << " does not contain TH1F/TH1S, exiting\n"; 
     return -1;
   } 
 
@@ -539,7 +555,6 @@ float ContentsYRange::runTest(const MonitorElement*me)
       }
     }
     // return fraction of bins that passed test
-    std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
     return 1.*(ncx - fail)/ncx;
   }
   else ///AS quality test !!!  
@@ -552,7 +567,6 @@ float ContentsYRange::runTest(const MonitorElement*me)
       if (failure) ++fail;
     }
     // return fraction of bins that passed test
-    std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
     return 1.*(ncx - fail)/ncx;
   } ///end of AS quality tests 
 }
@@ -570,8 +584,9 @@ float DeadChannel::runTest(const MonitorElement*me)
   TH1* h1=0;
   TH2* h2=0;//initialize histogram pointers
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
   //TH1F
   if (me->kind()==MonitorElement::DQM_KIND_TH1F) 
   { 
@@ -594,9 +609,10 @@ float DeadChannel::runTest(const MonitorElement*me)
   } 
   else 
   {
-    std::cout << "QTest:DeadChannel"
-      << " ME " << me->getFullname() 
-      << " does not contain TH1F/TH1S/TH2F/TH1S, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:DeadChannel"
+         << " ME " << me->getFullname() 
+         << " does not contain TH1F/TH1S/TH2F/TH1S, exiting\n"; 
     return -1;
   } 
 
@@ -626,7 +642,6 @@ float DeadChannel::runTest(const MonitorElement*me)
       }
     }
     //return fraction of alive channels
-    std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
     return 1.*(ncx - fail)/ncx;
   }
   //----------------------------------------------------------//
@@ -654,13 +669,13 @@ float DeadChannel::runTest(const MonitorElement*me)
       }
     }
     //return fraction of alive channels
-    std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
     return 1.*(ncx*ncy - fail) / (ncx*ncy);
   }
   else 
   {
-    std::cout << "QTest:DeadChannel"
-      << " TH1/TH2F are NULL, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:DeadChannel"
+                << " TH1/TH2F are NULL, exiting\n"; 
     return -1;
   }
 }
@@ -679,8 +694,9 @@ float NoisyChannel::runTest(const MonitorElement *me)
     return -1; 
   TH1* h=0;//initialize histogram pointer
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
 
   int nbins=0;
   //-- TH1F
@@ -711,9 +727,10 @@ float NoisyChannel::runTest(const MonitorElement *me)
   } 
   else 
   {  
-    std::cout << "QTest:NoisyChannel"
-      << " ME " << me->getFullname() 
-      << " does not contain TH1F/TH1S or TH2F/TH2S, exiting" << "\n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:NoisyChannel"
+        << " ME " << me->getFullname() 
+        << " does not contain TH1F/TH1S or TH2F/TH2S, exiting\n"; 
     return -1;
   }
 
@@ -746,7 +763,6 @@ float NoisyChannel::runTest(const MonitorElement *me)
   }
 
   // return fraction of bins that passed test
-  std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
   return 1.*(nbins - fail)/nbins;
 }
 
@@ -790,8 +806,9 @@ float ContentsWithinExpected::runTest(const MonitorElement*me)
     return -1;
   TH1* h=0; //initialize histogram pointer
 
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
 
   int ncx;
   int ncy;
@@ -828,8 +845,9 @@ float ContentsWithinExpected::runTest(const MonitorElement*me)
     }
     else
     {
-      std::cout << "QTest:ContentsWithinExpected" 
-	<< " ME does not contain TH2F/TH2S/TPROFILE/TPROFILE2D, exiting" << "\n"; 
+      if (verbose_>0) 
+        std::cout << "QTest:ContentsWithinExpected" 
+	 << " ME does not contain TH2F/TH2S/TPROFILE/TPROFILE2D, exiting\n"; 
       return -1;
     } 
 
@@ -949,8 +967,6 @@ float ContentsWithinExpected::runTest(const MonitorElement*me)
 	}
       }
     }
-
-    std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
     return 1.*(ncx*ncy - fail)/(ncx*ncy);
   } /// end of normal Test
 
@@ -970,8 +986,9 @@ float ContentsWithinExpected::runTest(const MonitorElement*me)
     }
     else 
     {
-      std::cout << "QTest:ContentsWithinExpected AS" 
-        << " ME does not contain TH2F/TH2S, exiting" << "\n"; 
+      if (verbose_>0) 
+        std::cout << "QTest:ContentsWithinExpected AS" 
+                  << " ME does not contain TH2F/TH2S, exiting\n"; 
       return -1;
     } 
 
@@ -989,7 +1006,6 @@ float ContentsWithinExpected::runTest(const MonitorElement*me)
 	  ++fail;
       }
     }
-    std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
     return 1.*(ncx*ncy-fail)/(ncx*ncy);
   } /// end of AS quality test 
 
@@ -998,8 +1014,9 @@ float ContentsWithinExpected::runTest(const MonitorElement*me)
 void ContentsWithinExpected::setMeanRange(float xmin, float xmax)
 {
   if (xmax < xmin)
-    std::cout << "QTest:ContentsWitinExpected" 
-      << " Illogical range: (" << xmin << ", " << xmax << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:ContentsWitinExpected" 
+                << " Illogical range: (" << xmin << ", " << xmax << "\n";
   minMean_ = xmin;
   maxMean_ = xmax;
   checkMean_ = true;
@@ -1009,8 +1026,9 @@ void ContentsWithinExpected::setMeanRange(float xmin, float xmax)
 void ContentsWithinExpected::setRMSRange(float xmin, float xmax)
 {
   if (xmax < xmin)
-    std::cout << "QTest:ContentsWitinExpected" 
-      << " Illogical range: (" << xmin << ", " << xmax << "\n";
+    if (verbose_>0) 
+      std::cout << "QTest:ContentsWitinExpected" 
+                << " Illogical range: (" << xmin << ", " << xmax << "\n";
   minRMS_ = xmin;
   maxRMS_ = xmax;
   checkRMS_ = true;
@@ -1037,8 +1055,9 @@ float MeanWithinExpected::runTest(const MonitorElement *me )
     return -1;
   TH1* h=0;
    
-  std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
-            << me-> getFullname() << "\n";
+  if (verbose_>1) 
+    std::cout << "QTest:" << getAlgoName() << "::runTest called on " 
+              << me-> getFullname() << "\n";
 
   if (me->kind()==MonitorElement::DQM_KIND_TH1F) 
   { 
@@ -1049,58 +1068,81 @@ float MeanWithinExpected::runTest(const MonitorElement *me )
     h = me->getTH1S(); //access Test histo
   }
   else {
-    std::cout << "QTest:MeanWithinExpected"
-      << " ME " << me->getFullname() 
-      << " does not contain TH1F/TH1S, exiting \n"; 
+    if (verbose_>0) 
+      std::cout << "QTest:MeanWithinExpected"
+                << " ME " << me->getFullname() 
+                << " does not contain TH1F/TH1S, exiting\n"; 
     return -1;
   } 
+ 
   
-  std::cout << "QTest:" << getAlgoName() << "::runTest done \n";
   if (useRange_) {
     float mean = h->GetMean();
     if (mean <= xmax_ && mean >= xmin_) 
       return 1;
-    else 
+    else
       return 0;
   }
   else if (useSigma_) 
-    return doGaussTest(h, sigma_);
+  {
+    if (sigma_ != 0.) 
+    {
+      float chi = (h->GetMean() - expMean_)/sigma_;
+      return TMath::Prob(chi*chi, 1);
+    }
+    else
+    {
+      if (verbose_>0) 
+        std::cout << "QTest:MeanWithinExpected"
+                  << " Error, sigma_ is zero, exiting\n";
+      return 0;
+    }
+  }
   else if (useRMS_) 
-    return doGaussTest(h, h->GetRMS());
+  {
+    if (h->GetRMS() != 0.) 
+    {
+      float chi = (h->GetMean() - expMean_)/h->GetRMS();
+      return TMath::Prob(chi*chi, 1);
+    }
+    else
+    {
+      if (verbose_>0) 
+        std::cout << "QTest:MeanWithinExpected"
+                  << " Error, RMS is zero, exiting\n";
+      return 0;
+    }
+  }
   else 
-    std::cout << "QTest:MeanWithinExpected"
-      << " Error, neither Range, nor Sigma, nor RMS test, exiting \n";
-    return -99; 
+    if (verbose_>0) 
+      std::cout << "QTest:MeanWithinExpected"
+                << " Error, neither Range, nor Sigma, nor RMS, exiting\n";
+    return -1; 
 }
 
-// test assuming mean value is quantity with gaussian errors
-float MeanWithinExpected::doGaussTest(const TH1 *h, float sigma)
-{
-  float chi = (h->GetMean() - expMean_)/sigma;
-  return TMath::Prob(chi*chi, 1);
-}
-
-// check that exp_sigma_ is non-zero
-void
-MeanWithinExpected::useSigma(float expectedSigma)
-{
-  useSigma_ = true;
-  useRMS_ = useRange_ = false;
-  sigma_ = expectedSigma;
-
-  if (sigma_ == 0) 
-    std::cout << "QTest:MeanWithinExpected"
-      << " Expected sigma = " << sigma_ << "\n";
-}
-
-// check that allowed range is logical
 void MeanWithinExpected::useRange(float xmin, float xmax)
 {
     useRange_ = true;
     useSigma_ = useRMS_ = false;
     xmin_ = xmin; xmax_ = xmax;
-
     if (xmin_ > xmax_)  
+      if (verbose_>0) 
+        std::cout << "QTest:MeanWithinExpected"
+                  << " Illogical range: (" << xmin_ << ", " << xmax_ << "\n";
+}
+void MeanWithinExpected::useSigma(float expectedSigma)
+{
+  useSigma_ = true;
+  useRMS_ = useRange_ = false;
+  sigma_ = expectedSigma;
+  if (sigma_ == 0) 
+    if (verbose_>0) 
       std::cout << "QTest:MeanWithinExpected"
-        << " Illogical range: (" << xmin_ << ", " << xmax_ << "\n";
+                << " Expected sigma = " << sigma_ << "\n";
+}
+
+void MeanWithinExpected::useRMS()
+{
+  useRMS_ = true;
+  useSigma_ = useRange_ = false;
 }
