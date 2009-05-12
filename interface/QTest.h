@@ -59,7 +59,6 @@ public:
   /// set probability limit for warning and error (default: 90% and 50%)
   void setWarningProb(float prob)       { warningProb_ = prob; }
   void setErrorProb(float prob)         { errorProb_ = prob; }
-  void setVerbose(int verbose)          { verbose_ = verbose; }
   /// get vector of channels that failed test
   /// (not relevant for all quality tests!)
   virtual std::vector<DQMChannel> getBadChannels(void) const
@@ -113,6 +112,7 @@ protected:
   int status_;  /// quality test status
   std::string message_;  /// message attached to test
   float warningProb_, errorProb_;  /// probability limits for warnings, errors
+  void setVerbose(int verbose)          { verbose_ = verbose; }
   int verbose_;  
 
 private:

@@ -29,6 +29,7 @@ QCriterion::init(void)
 float QCriterion::runTest(const MonitorElement *me)
 {
   raiseDQMError("QCriterion", "virtual runTest method called" );
+  return 0.;
 }
 //===================================================//
 //================ QUALITY TESTS ====================//
