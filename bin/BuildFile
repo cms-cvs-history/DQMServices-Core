@@ -1,2 +1,4 @@
 <use name=DQMServices/Core>
-<bin file=DQMCollector.cpp></bin>
+<bin name='DQMCollector' file="DQMCollector.cpp"></bin>
+<bin name='DQMDumpFile' file="DumpFile.cpp"></bin>
+<bin name='DQMMergeFile' file="MergeFile.cpp"></bin>
