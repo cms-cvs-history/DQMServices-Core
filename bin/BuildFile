@@ -1,3 +1,4 @@
+<flags CPPFLAGS="-DWITHOUT_CMS_FRAMEWORK=0">
 <use name=DQMServices/Core>
 <bin name='DQMCollector' file="DQMCollector.cpp"></bin>
 <bin name='DQMDumpFile' file="DumpFile.cpp"></bin>
