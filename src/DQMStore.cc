@@ -1104,7 +1104,8 @@ DQMStore::reset(void)
 bool
 DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
 {
-  // std::cout << " overwrite " << (overwrite ? "true" : "false") << std::endl;
+  std::cout << " overwrite " << (overwrite ? "true" : "false") << std::endl;
+  std::cout << " collate   " << (collateHistograms_ ? "true" : "false") << std::endl;
   std::string path;
   if (TH1F *h = dynamic_cast<TH1F *>(obj))
   {
@@ -1662,27 +1663,25 @@ DQMStore::open(const std::string &filename,
 
 /// public load root file <filename>, and copy MonitorElements;
 /// overwrite identical MonitorElements (default: true);
+/// set DQMStore.collateHistograms to true to sum several files
 /// note: this method strips off run dir structure
 void 
 DQMStore::load(const std::string &filename,
                OpenRunDirs stripdirs /* =StripRunDirs */)
 {
-   if (verbose_)
+   bool overwrite = true;
+   if (collateHistograms_) overwrite = false;
+   if (verbose_) 
+   {
      std::cout << "DQMStore::load: reading from file '" << filename << "'\n";
-  
-   readFile(filename,true,"","",stripdirs);
-   
-   // loop over ME and check for correct pointers to reference histograms
-   // vector<MonitorElement*> AllME=getAllContents("/");
-   // vector<MonitorElement*>::iterator me=AllME.begin();
-   /* for ( ; me != AllME.end() ; ++me ){
-      std::cout << (*me)->getFullname() << endl;
-      if (getReferenceME(*me)) 
-         std::cout << getReferenceME(*me)->getFullname() << endl;
-      else
-	 std::cout << " no ref " << endl;
-   }*/
-   
+     if (collateHistograms_)
+       std::cout << "DQMStore::load: in collate mode   " << "\n";
+     else
+       std::cout << "DQMStore::load: in overwrite mode   " << "\n";
+   }
+    
+   readFile(filename,overwrite,"","",stripdirs);
+     
 }
 
 /// private readFile <filename>, and copy MonitorElements;
