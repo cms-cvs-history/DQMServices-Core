@@ -162,7 +162,7 @@ public:
 				     const std::string &path = "",
 				     const std::string &pattern = "",
 				     const std::string &rewrite = "",
-				     SaveReferenceTag ref = SaveWithReferenceForQTest,
+				     SaveReferenceTag ref = SaveWithReference,
                                      int minStatus = dqm::qstatus::STATUS_OK);
   void				open(const std::string &filename,
 				     bool overwrite = false,
