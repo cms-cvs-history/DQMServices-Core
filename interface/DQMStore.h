@@ -16,6 +16,7 @@ class QCriterion;
 class TFile;
 class TObject;
 class TObjString;
+class TH1D;
 class TH1F;
 class TH1S;
 class TH2F;
@@ -78,6 +79,14 @@ public:
 					      const std::string &title,
 					      int nchX, float *xbinsize);
   MonitorElement *		book1S       (const std::string &name, TH1S *h);
+
+  MonitorElement *		book1DD       (const std::string &name,
+					      const std::string &title,
+					      int nchX, double lowX, double highX);
+  MonitorElement *		book1DD       (const std::string &name,
+					      const std::string &title,
+					      int nchX, float *xbinsize);
+  MonitorElement *		book1DD       (const std::string &name, TH1D *h);
 
   MonitorElement *		book2D       (const std::string &name,
 					      const std::string &title,
@@ -187,8 +196,6 @@ public:
   void                          load(const std::string &filename,
 				     OpenRunDirs stripdirs = StripRunDirs);
   std::string			getFileReleaseVersion(const std::string &filename);
-  std::string			getFileDQMPatchVersion(const std::string &filename);
-  std::string			getDQMPatchVersion(void);
 
   //-------------------------------------------------------------------------
   // ---------------------- Public print methods -----------------------------
@@ -226,6 +233,7 @@ private:
 					      const std::string &prepend,
 					      const std::string &curdir,
 					      OpenRunDirs stripdirs);
+  void                          makeVersionInfo(void);
 
   MonitorElement *		findObject(const std::string &dir,
 					   const std::string &name,
@@ -256,6 +264,7 @@ private:
   MonitorElement *		bookString(const std::string &dir, const std::string &name, const std::string &value);
   MonitorElement *		book1D(const std::string &dir, const std::string &name, TH1F *h);
   MonitorElement *		book1S(const std::string &dir, const std::string &name, TH1S *h);
+  MonitorElement *		book1DD(const std::string &dir, const std::string &name, TH1D *h);
   MonitorElement *		book2D(const std::string &dir, const std::string &name, TH2F *h);
   MonitorElement *		book2S(const std::string &dir, const std::string &name, TH2S *h);
   MonitorElement *		book3D(const std::string &dir, const std::string &name, TH3F *h);
@@ -264,6 +273,7 @@ private:
 
   static void			collate1D(MonitorElement *me, TH1F *h);
   static void			collate1S(MonitorElement *me, TH1S *h);
+  static void			collate1DD(MonitorElement *me, TH1D *h);
   static void			collate2D(MonitorElement *me, TH2F *h);
   static void			collate2S(MonitorElement *me, TH2S *h);
   static void			collate3D(MonitorElement *me, TH3F *h);
@@ -303,6 +313,15 @@ private:
   QCMap				qtests_;
   QAMap				qalgos_;
   QTestSpecs			qtestspecs_;
+  
+  MonitorElement * versCMSSW_ ;
+  MonitorElement * versDataset_ ;
+  MonitorElement * versTaglist_ ;
+  MonitorElement * versGlobaltag_ ;
+  MonitorElement * hostName_;          ///Hostname of the local machine
+  MonitorElement * processName_;       ///DQM "name" of the job (eg, Hcal or DT)
+  MonitorElement * workingDir_;        ///Current working directory of the job
+  MonitorElement * processId_;         ///The PID associated with this job
 
   friend class edm::DQMHttpSource;
   friend class DQMOldReceiver;

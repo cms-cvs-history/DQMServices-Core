@@ -6,6 +6,7 @@
 #include "classlib/utils/RegexpMatch.h"
 #include "classlib/utils/Regexp.h"
 #include "classlib/utils/StringOps.h"
+#include <TSystem.h>
 #include "TFile.h"
 #include "TROOT.h"
 #include "TKey.h"
@@ -54,7 +55,6 @@ static std::string ROOT_PATHNAME = ".";
 static std::string s_monitorDirName = "DQMData";
 static std::string s_referenceDirName = "Reference";
 static std::string s_collateDirName = "Collate";
-static std::string s_dqmPatchVersion = "0";
 static std::string s_safe = "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+=_()# ";
 static DQMStore *s_instance = 0;
 
@@ -156,6 +156,8 @@ DQMStore::DQMStore(const edm::ParameterSet &pset)
     std::cout << "DQMStore: using reference file '" << ref << "'\n";
     readFile(ref, true, "", s_referenceDirName, StripRunDirs);
   }
+
+  makeVersionInfo();
 
   initQCriterion<Comp2RefChi2>(qalgos_);
   initQCriterion<Comp2RefKolmogorov>(qalgos_);
@@ -438,14 +440,20 @@ DQMStore::book1D(const std::string &dir, const std::string &name, TH1F *h)
 {
   return book(dir, name, "book1D", MonitorElement::DQM_KIND_TH1F, h, collate1D);
 }
-
 /// Book 1D histogram based on TH1S.
 MonitorElement *
 DQMStore::book1S(const std::string &dir, const std::string &name, TH1S *h)
 {
   return book(dir, name, "book1S", MonitorElement::DQM_KIND_TH1S, h, collate1S);
 }
+/// Book 1D histogram based on TH1D.
+MonitorElement *
+DQMStore::book1DD(const std::string &dir, const std::string &name, TH1D *h)
+{
+  return book(dir, name, "book1DD", MonitorElement::DQM_KIND_TH1D, h, collate1DD);
+}
 
+/// ----------------------------
 /// Book 1D histogram.
 MonitorElement *
 DQMStore::book1D(const std::string &name, const std::string &title,
@@ -453,7 +461,6 @@ DQMStore::book1D(const std::string &name, const std::string &title,
 {
   return book1D(pwd_, name, new TH1F(name.c_str(), title.c_str(), nchX, lowX, highX));
 }
-
 /// Book 1S histogram.
 MonitorElement *
 DQMStore::book1S(const std::string &name, const std::string &title,
@@ -461,7 +468,15 @@ DQMStore::book1S(const std::string &name, const std::string &title,
 {
   return book1S(pwd_, name, new TH1S(name.c_str(), title.c_str(), nchX, lowX, highX));
 }
+/// Book 1DD histogram.
+MonitorElement *
+DQMStore::book1DD(const std::string &name, const std::string &title,
+		 int nchX, double lowX, double highX)
+{
+  return book1DD(pwd_, name, new TH1D(name.c_str(), title.c_str(), nchX, lowX, highX));
+}
 
+/// ----------------------------
 /// Book 1D variable bin histogram.
 MonitorElement *
 DQMStore::book1D(const std::string &name, const std::string &title,
@@ -469,19 +484,39 @@ DQMStore::book1D(const std::string &name, const std::string &title,
 {
   return book1D(pwd_, name, new TH1F(name.c_str(), title.c_str(), nchX, xbinsize));
 }
+/// Book 1S variable bin histogram.
+MonitorElement *
+DQMStore::book1S(const std::string &name, const std::string &title,
+		 int nchX, float *xbinsize)
+{
+  return book1S(pwd_, name, new TH1S(name.c_str(), title.c_str(), nchX, xbinsize));
+}
+/// Book 1DD variable bin histogram.
+MonitorElement *
+DQMStore::book1DD(const std::string &name, const std::string &title,
+		 int nchX, float *xbinsize)
+{
+  return book1DD(pwd_, name, new TH1D(name.c_str(), title.c_str(), nchX, xbinsize));
+}
 
+/// ----------------------------
 /// Book 1D histogram by cloning an existing histogram.
 MonitorElement *
 DQMStore::book1D(const std::string &name, TH1F *source)
 {
   return book1D(pwd_, name, static_cast<TH1F *>(source->Clone(name.c_str())));
 }
-
 /// Book 1S histogram by cloning an existing histogram.
 MonitorElement *
 DQMStore::book1S(const std::string &name, TH1S *source)
 {
   return book1S(pwd_, name, static_cast<TH1S *>(source->Clone(name.c_str())));
+}
+/// Book 1DD histogram by cloning an existing histogram.
+MonitorElement *
+DQMStore::book1DD(const std::string &name, TH1D *source)
+{
+  return book1DD(pwd_, name, static_cast<TH1D *>(source->Clone(name.c_str())));
 }
 
 // -------------------------------------------------------------------
@@ -710,6 +745,10 @@ DQMStore::collate1D(MonitorElement *me, TH1F *h)
 void
 DQMStore::collate1S(MonitorElement *me, TH1S *h)
 { me->getTH1S()->Add(h); }
+
+void
+DQMStore::collate1DD(MonitorElement *me, TH1D *h)
+{ me->getTH1D()->Add(h); }
 
 void
 DQMStore::collate2D(MonitorElement *me, TH2F *h)
@@ -1155,6 +1194,16 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
     else if (isCollateME(me) || collateHistograms_)
       collate1S(me, h);
   }
+  else if (TH1D *h = dynamic_cast<TH1D *>(obj))
+  {
+    MonitorElement *me = findObject(dir, h->GetName(), path);
+    if (! me)
+      me = book1DD(dir, h->GetName(), (TH1D *) h->Clone());
+    else if (overwrite)
+      me->copyFrom(h);
+    else if (isCollateME(me) || collateHistograms_)
+      collate1DD(me, h);
+  }
   else if (TH2F *h = dynamic_cast<TH2F *>(obj))
   {
     MonitorElement *me = findObject(dir, h->GetName(), path);
@@ -1217,12 +1266,6 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
 	  std::cout << "Input file version: " << obj->GetName() << std::endl;
 	return true;
       }
-      else if (strstr(obj->GetName(), "DQMPATCH"))
-      {
-	if (verbose_)
-	  std::cout << "DQM patch version: " << obj->GetName() << std::endl;
-	return true;
-      }
       else
       {
 	std::cout << "*** DQMStore: WARNING: cannot extract object '"
@@ -1242,7 +1285,7 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
       if (! me || overwrite)
       {
 	if (! me) me = bookInt(dir, label);
-	me->Fill(atoi(value.c_str()));
+	me->Fill(atoi(value.c_str())); // make sure this is 64 bits
       }
     }
     else if (kind == "f")
@@ -1425,8 +1468,8 @@ DQMStore::save(const std::string &filename,
 
   if (outputFileRecreate_) // write versions once upon opening
   {
+    // still write this for for the time being
     TObjString(edm::getReleaseVersion().c_str()).Write(); // Save CMSSW version
-    TObjString(getDQMPatchVersion().c_str()).Write(); // Save DQM patch version
     outputFileRecreate_=false;
   }
   
@@ -1547,6 +1590,21 @@ DQMStore::save(const std::string &filename,
     std::cout << "DQMStore::save: successfully wrote " << nme 
               << " objects from path '" << path  
 	      << "' into DQM file '" << filename << "'\n";
+}
+
+void 
+DQMStore::makeVersionInfo()
+{
+    setCurrentFolder("DQMVersion");
+    versCMSSW_     = bookString("CMSSW",edm::getReleaseVersion().c_str() );
+    hostName_      = bookString("hostName",gSystem->HostName());
+    workingDir_    = bookString("workingDir",gSystem->pwd());
+    processId_     = bookInt("processID"); processId_->Fill(gSystem->GetPid());   
+
+    versGlobaltag_ = bookString("Globaltag","global tag"); // FIXME
+    versTaglist_   = bookString("Taglist","list of tags"); // FIXME
+    versDataset_   = bookString("Dataset","data set");     // FIXME
+    
 }
 
 /// read ROOT objects from file <file> in directory <onlypath>;
@@ -1778,33 +1836,6 @@ DQMStore::getFileReleaseVersion(const std::string &filename)
   f.Close();
   return name;
 }
-
-std::string
-DQMStore::getFileDQMPatchVersion(const std::string &filename)
-{
-  TFile f(filename.c_str());
-  if (f.IsZombie())
-    raiseDQMError("DQMStore", "Failed to open file '%s'", filename.c_str());
-
-  // Loop over the contents of this directory in the file.
-  TKey *key;
-  TIter next (gDirectory->GetListOfKeys());
-  std::string name;
-
-  while ((key = (TKey *) next()))
-  {
-    name = key->ReadObj()->GetName();
-    if (name.compare(0, 8, "DQMPATCH") == 0)
-      break;
-  }
-
-  f.Close();
-  return name;
-}
-
-std::string
-DQMStore::getDQMPatchVersion(void)
-{ return "DQMPATCH:" + s_dqmPatchVersion; } 
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////

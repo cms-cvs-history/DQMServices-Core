@@ -20,6 +20,7 @@
 #include "TH2S.h"
 #include "TH1F.h"
 #include "TH1S.h"
+#include "TH1D.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
@@ -326,6 +327,8 @@ DQMNet::reinstateObject(DQMStore *store, Object &o)
     store->book1D(name, t);
   else if (TH1S *t = dynamic_cast<TH1S *>(o.object))
     store->book1S(name, t);
+  else if (TH1D *t = dynamic_cast<TH1D *>(o.object))
+    store->book1DD(name, t);
   else if (TObjString *t = dynamic_cast<TObjString *>(o.object))
   {
     RegexpMatch m;

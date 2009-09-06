@@ -62,6 +62,7 @@ MonitorElement::initialise(Kind kind, const std::string &path)
 
   case DQM_KIND_TH1F:
   case DQM_KIND_TH1S:
+  case DQM_KIND_TH1D:
   case DQM_KIND_TH2F:
   case DQM_KIND_TH2S:
   case DQM_KIND_TH3F:
@@ -90,6 +91,11 @@ MonitorElement::initialise(Kind kind, const std::string &path, TH1 *rootobj)
 
   case DQM_KIND_TH1S:
     assert(dynamic_cast<TH1S *>(rootobj));
+    curvalue_.tobj = data_.object = rootobj;
+    break;
+
+  case DQM_KIND_TH1D:
+    assert(dynamic_cast<TH1D *>(rootobj));
     curvalue_.tobj = data_.object = rootobj;
     break;
 
@@ -169,7 +175,7 @@ MonitorElement::~MonitorElement(void)
 /// "Fill" ME methods:
 /// can be used with 1D histograms or scalars
 void
-MonitorElement::Fill(float x)
+MonitorElement::Fill(double x)
 {
   update();
   if (kind_ == DQM_KIND_INT)
@@ -190,19 +196,25 @@ MonitorElement::Fill(float x)
   else if (kind_ == DQM_KIND_TH1S)
     accessRootObject(__PRETTY_FUNCTION__, 1)
       ->Fill(x, 1);
+  else if (kind_ == DQM_KIND_TH1D)
+    accessRootObject(__PRETTY_FUNCTION__, 1)
+      ->Fill(x, 1);
   else
     incompatible(__PRETTY_FUNCTION__);
 }
 
 /// can be used with 2D (x,y) or 1D (x, w) histograms
 void
-MonitorElement::Fill(float x, float yw)
+MonitorElement::Fill(double x, double yw)
 {
   update();
   if (kind_ == DQM_KIND_TH1F)
     accessRootObject(__PRETTY_FUNCTION__, 1)
       ->Fill(x, yw);
   else if (kind_ == DQM_KIND_TH1S)
+    accessRootObject(__PRETTY_FUNCTION__, 1)
+      ->Fill(x, yw);
+  else if (kind_ == DQM_KIND_TH1D)
     accessRootObject(__PRETTY_FUNCTION__, 1)
       ->Fill(x, yw);
   else if (kind_ == DQM_KIND_TH2F)
@@ -225,8 +237,10 @@ void
 MonitorElement::ShiftFillLast(float y, float ye, int xscale)
 {
   update();
-  if (kind_ == DQM_KIND_TH1F || kind_ == DQM_KIND_TH1S ) 
-  {
+  if (kind_ == DQM_KIND_TH1F || 
+      kind_ == DQM_KIND_TH1S || 
+      kind_ == DQM_KIND_TH1D ) 
+    {
     int nbins = getNbinsX();
     int entries = (int)getEntries();
     // first fill bins from left to right
@@ -238,15 +252,15 @@ MonitorElement::ShiftFillLast(float y, float ye, int xscale)
       index = nbins;
       xlow = entries - nbins + 2 ; xup = entries ; 
       // average first bin
-      float y1 = getBinContent(1);
-      float y2 = getBinContent(2);
-      float y1err = getBinError(1);
-      float y2err = getBinError(2);
-      float N = entries - nbins + 1.;
+      double y1 = getBinContent(1);
+      double y2 = getBinContent(2);
+      double y1err = getBinError(1);
+      double y2err = getBinError(2);
+      double N = entries - nbins + 1.;
       if ( ye == 0. || y1err == 0. || y2err == 0.) 
       {
         // for errors zero calculate unweighted mean and its error
-	float sum = N*y1 + y2;
+	double sum = N*y1 + y2;
         y1 = sum/(N+1.) ;
 	// FIXME check if correct
         y1err = sqrt((N+1.)*(N*y1*y1 + y2*y2) - sum*sum)/(N+1.);  
@@ -254,8 +268,8 @@ MonitorElement::ShiftFillLast(float y, float ye, int xscale)
       else 
       {
         // for errors non-zero calculate weighted mean and its error
-        float denom = (1./y1err + 1./y2err);
-        float mean = (y1/y1err + y2/y2err)/denom;
+        double denom = (1./y1err + 1./y2err);
+        double mean = (y1/y1err + y2/y2err)/denom;
 	// FIXME check if correct
 	y1err = sqrt(((y1-mean)*(y1-mean)/y1err +
                       (y2-mean)*(y2-mean)/y2err)/denom/2.);
@@ -525,7 +539,7 @@ MonitorElement::getNbinsZ(void) const
     ->GetNbinsZ(); }
 
 /// get content of bin (1-D)
-float
+double
 MonitorElement::getBinContent(int binx) const
 { return accessRootObject(__PRETTY_FUNCTION__, 1)
     ->GetBinContent(binx); }
@@ -543,7 +557,7 @@ MonitorElement::getBinContent(int binx, int biny, int binz) const
     ->GetBinContent(binx, biny, binz); }
 
 /// get uncertainty on content of bin (1-D) - See TH1::GetBinError for details
-float
+double
 MonitorElement::getBinError(int binx) const
 { return accessRootObject(__PRETTY_FUNCTION__, 1)
     ->GetBinError(binx); }
@@ -561,13 +575,13 @@ MonitorElement::getBinError(int binx, int biny, int binz) const
     ->GetBinError(binx, biny, binz); }
 
 /// get # of entries
-float
+double
 MonitorElement::getEntries(void) const
 { return accessRootObject(__PRETTY_FUNCTION__, 1)
     ->GetEntries(); }
 
 /// get # of bin entries (for profiles)
-float
+double
 MonitorElement::getBinEntries(int bin) const
 {
   if (kind_ == DQM_KIND_TPROFILE)
@@ -627,7 +641,7 @@ MonitorElement::getTitle(void) const
 // 
 /// set content of bin (1-D)
 void
-MonitorElement::setBinContent(int binx, float content)
+MonitorElement::setBinContent(int binx, double content)
 {
   update();
   accessRootObject(__PRETTY_FUNCTION__, 1)
@@ -652,7 +666,7 @@ MonitorElement::setBinContent(int binx, int biny, int binz, float content)
 
 /// set uncertainty on content of bin (1-D)
 void
-MonitorElement::setBinError(int binx, float error)
+MonitorElement::setBinError(int binx, double error)
 {
   update();
   accessRootObject(__PRETTY_FUNCTION__, 1)
@@ -679,7 +693,7 @@ MonitorElement::setBinError(int binx, int biny, int binz, float error)
 
 /// set # of bin entries (to be used for profiles)
 void
-MonitorElement::setBinEntries(int bin, float nentries)
+MonitorElement::setBinEntries(int bin, double nentries)
 {
   update();
   if (kind_ == DQM_KIND_TPROFILE)
@@ -694,7 +708,7 @@ MonitorElement::setBinEntries(int bin, float nentries)
 
 /// set # of entries
 void
-MonitorElement::setEntries(float nentries)
+MonitorElement::setEntries(double nentries)
 {
   update();
   accessRootObject(__PRETTY_FUNCTION__, 1)
@@ -833,6 +847,24 @@ MonitorElement::softReset(void)
     r->Add(orig);
     orig->Reset();
   }
+  else if (kind_ == DQM_KIND_TH1D)
+  {
+    TH1D *orig = static_cast<TH1D *>(curvalue_.tobj);
+    TH1D *r = static_cast<TH1D *>(refvalue_);
+    if (! r)
+    {
+      refvalue_ = r = new TH1D((std::string(orig->GetName()) + "_ref").c_str(),
+			       orig->GetTitle(),
+			       orig->GetNbinsX(),
+			       orig->GetXaxis()->GetXmin(),
+			       orig->GetXaxis()->GetXmax());
+      r->SetDirectory(0);
+      r->Reset();
+    }
+
+    r->Add(orig);
+    orig->Reset();
+  }
   else if (kind_ == DQM_KIND_TH2F)
   {
     TH2F *orig = static_cast<TH2F *>(curvalue_.tobj);
@@ -956,6 +988,7 @@ MonitorElement::disableSoftReset(void)
   {
     if (kind_ == DQM_KIND_TH1F
 	|| kind_ == DQM_KIND_TH1S
+	|| kind_ == DQM_KIND_TH1D
 	|| kind_ == DQM_KIND_TH2F
 	|| kind_ == DQM_KIND_TH2S
 	|| kind_ == DQM_KIND_TH3F)
@@ -1117,8 +1150,10 @@ MonitorElement::copyFrom(TH1 *from)
 
   if (isSoftResetEnabled())
   {
-    if (kind_ == DQM_KIND_TH1F
+    if (kind_ == DQM_KIND_TH1D
+	|| kind_ == DQM_KIND_TH1F
 	|| kind_ == DQM_KIND_TH1S
+	|| kind_ == DQM_KIND_TH1D
 	|| kind_ == DQM_KIND_TH2F
 	|| kind_ == DQM_KIND_TH2S
 	|| kind_ == DQM_KIND_TH3F)
@@ -1256,6 +1291,14 @@ MonitorElement::getTH1S(void) const
   return dynamic_cast<TH1S *>(accessRootObject(__PRETTY_FUNCTION__, 1));
 }
 
+TH1D *
+MonitorElement::getTH1D(void) const
+{
+  assert(kind_ == DQM_KIND_TH1D);
+  const_cast<MonitorElement *>(this)->update();
+  return dynamic_cast<TH1D *>(accessRootObject(__PRETTY_FUNCTION__, 1));
+}
+
 TH2F *
 MonitorElement::getTH2F(void) const
 {
@@ -1326,6 +1369,15 @@ MonitorElement::getRefTH1S(void) const
   assert(kind_ == DQM_KIND_TH1S);
   const_cast<MonitorElement *>(this)->update();
   return dynamic_cast<TH1S *>
+    (checkRootObject(data_.name, data_.reference, __PRETTY_FUNCTION__, 1));
+}
+
+TH1D *
+MonitorElement::getRefTH1D(void) const
+{
+  assert(kind_ == DQM_KIND_TH1D);
+  const_cast<MonitorElement *>(this)->update();
+  return dynamic_cast<TH1D *>
     (checkRootObject(data_.name, data_.reference, __PRETTY_FUNCTION__, 1));
 }
 

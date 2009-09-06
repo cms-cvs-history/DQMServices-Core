@@ -19,7 +19,7 @@ struct MEInfo
 
 static const char *s_kind[] = {
   "INVALID", "INT", "REAL", "STRING",
-  "TH1F", "TH1S", "TH2F", "TH2S",
+  "TH1F", "TH1S", "TH1D", "TH2F", "TH2S",
   "TH3F", "TPROFILE", "TPROFILE2D"
 };
 

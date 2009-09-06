@@ -4,6 +4,7 @@
 # include "DQMServices/Core/interface/DQMNet.h"
 # include "DQMServices/Core/interface/QReport.h"
 # include "TF1.h"
+# include "TH1D.h"
 # include "TH1F.h"
 # include "TH1S.h"
 # include "TH2F.h"
@@ -47,6 +48,7 @@ public:
     DQM_KIND_STRING,
     DQM_KIND_TH1F,
     DQM_KIND_TH1S,
+    DQM_KIND_TH1D,
     DQM_KIND_TH2F,
     DQM_KIND_TH2S,
     DQM_KIND_TH3F,
@@ -113,8 +115,13 @@ public:
   void setResetMe(bool flag)
     { data_.flags |= DQM_FLAG_RESET; }
 
-  void Fill(float x);
-  void Fill(float x, float yw);
+/*  void Fill(int32_t i)         { Fill((int64_t)i) ;}
+  void Fill(uint32_t i)        { Fill((int64_t)i) ;}
+  void Fill(int16_t i)         { Fill((int64_t)i) ;}
+  void Fill(uint16_t i)        { Fill((int64_t)i) ;}
+  void Fill(int64_t i);*/
+  void Fill(double x);
+  void Fill(double x, double yw);
   void Fill(float x, float y, float zw);
   void Fill(float x, float y, float z, float w);
   void ShiftFillLast(float y, float ye = 0., int xscale = 1);
@@ -168,14 +175,14 @@ public:
   int getNbinsX(void) const;
   int getNbinsY(void) const;
   int getNbinsZ(void) const;
-  float getBinContent(int binx) const;
+  double getBinContent(int binx) const;
   float getBinContent(int binx, int biny) const;
   float getBinContent(int binx, int biny, int binz) const;
-  float getBinError(int binx) const;
+  double getBinError(int binx) const;
   float getBinError(int binx, int biny) const;
   float getBinError(int binx, int biny, int binz) const;
-  float getEntries(void) const;
-  float getBinEntries(int bin) const;
+  double getEntries(void) const;
+  double getBinEntries(int bin) const;
 
 private:
   float getYmin(void) const;
@@ -184,14 +191,14 @@ private:
 public:
   std::string getAxisTitle(int axis = 1) const;
   std::string getTitle(void) const;
-  void setBinContent(int binx, float content);
+  void setBinContent(int binx, double content);
   void setBinContent(int binx, int biny, float content);
   void setBinContent(int binx, int biny, int binz, float content);
-  void setBinError(int binx, float error);
+  void setBinError(int binx, double error);
   void setBinError(int binx, int biny, float error);
   void setBinError(int binx, int biny, int binz, float error);
-  void setBinEntries(int bin, float nentries);
-  void setEntries(float nentries);
+  void setBinEntries(int bin, double nentries);
+  void setEntries(double nentries);
   void setBinLabel(int bin, const std::string &label, int axis = 1);
   void setAxisRange(float xmin, float xmax, int axis = 1);
   void setAxisTitle(const std::string &title, int axis = 1);
@@ -250,6 +257,7 @@ public:
   TH1 *getTH1(void) const;
   TH1F *getTH1F(void) const;
   TH1S *getTH1S(void) const;
+  TH1D *getTH1D(void) const;
   TH2F *getTH2F(void) const;
   TH2S *getTH2S(void) const;
   TH3F *getTH3F(void) const;
@@ -260,6 +268,7 @@ public:
   TH1 *getRefTH1(void) const;
   TH1F *getRefTH1F(void) const;
   TH1S *getRefTH1S(void) const;
+  TH1D *getRefTH1D(void) const;
   TH2F *getRefTH2F(void) const;
   TH2S *getRefTH2S(void) const;
   TH3F *getRefTH3F(void) const;

@@ -23,8 +23,8 @@ class NoisyChannel;			typedef NoisyChannel NoisyChannelROOT;
 class DeadChannel;			typedef DeadChannel DeadChannelROOT;
 class ContentsWithinExpected;		typedef ContentsWithinExpected ContentsWithinExpectedROOT;
 class MeanWithinExpected;		typedef MeanWithinExpected MeanWithinExpectedROOT;
-class AllContentWithinFixedRange;	typedef AllContentWithinFixedRange RuleAllContentWithinFixedRange; typedef AllContentWithinFixedRange AllContentWithinFixedRangeROOT;
-class AllContentWithinFloatingRange;	typedef AllContentWithinFloatingRange RuleAllContentWithinFloatingRange;	typedef AllContentWithinFloatingRange AllContentWithinFloatingRangeROOT;
+//class AllContentWithinFixedRange;	typedef AllContentWithinFixedRange RuleAllContentWithinFixedRange; typedef AllContentWithinFixedRange AllContentWithinFixedRangeROOT;
+//class AllContentWithinFloatingRange;	typedef AllContentWithinFloatingRange RuleAllContentWithinFloatingRange;	typedef AllContentWithinFloatingRange AllContentWithinFloatingRangeROOT;
 class FlatOccupancy1d;			typedef FlatOccupancy1d RuleFlatOccupancy1d; typedef FlatOccupancy1d FlatOccupancy1dROOT;
 class FixedFlatOccupancy1d;		typedef FixedFlatOccupancy1d RuleFixedFlatOccupancy1d; typedef FixedFlatOccupancy1d FixedFlatOccupancy1dROOT;
 class CSC01;				typedef CSC01 RuleCSC01; typedef CSC01 CSC01ROOT;
@@ -480,7 +480,7 @@ protected:
 };
 
 //==================== AllContentWithinFixedRange   =========================//
-class AllContentWithinFixedRange : public SimpleTest
+/*class AllContentWithinFixedRange : public SimpleTest
 {
 public:
   AllContentWithinFixedRange(const std::string &name) : SimpleTest(name)
@@ -509,9 +509,9 @@ protected:
   double S_fail_obs, S_pass_obs;
   int result;
 };
-
+*/
 //==================== AllContentWithinFloatingRange  =========================//
-class AllContentWithinFloatingRange : public SimpleTest
+/*class AllContentWithinFloatingRange : public SimpleTest
 {
 public:
   AllContentWithinFloatingRange(const std::string &name) : SimpleTest(name)
@@ -539,7 +539,7 @@ protected:
   double epsilon_obs;
   double S_fail_obs, S_pass_obs;
   int result;
-};
+};*/
 
 //==================== FlatOccupancy1d   =========================//
 #if 0 // FIXME: need to know what parameters to set before runTest!
