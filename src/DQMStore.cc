@@ -161,12 +161,12 @@ DQMStore::DQMStore(const edm::ParameterSet &pset)
 
   initQCriterion<Comp2RefChi2>(qalgos_);
   initQCriterion<Comp2RefKolmogorov>(qalgos_);
+  initQCriterion<Comp2RefEqualH>(qalgos_);
   initQCriterion<ContentsXRange>(qalgos_);
   initQCriterion<ContentsYRange>(qalgos_);
-  initQCriterion<MeanWithinExpected>(qalgos_);
-  initQCriterion<Comp2RefEqualH>(qalgos_);
-  initQCriterion<DeadChannel>(qalgos_);
   initQCriterion<NoisyChannel>(qalgos_);
+  initQCriterion<DeadChannel>(qalgos_);
+  initQCriterion<MeanWithinExpected>(qalgos_);
   initQCriterion<ContentsWithinExpected>(qalgos_);
 }
 
@@ -185,7 +185,7 @@ DQMStore::~DQMStore(void)
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
-/// set verbose level (0 turns all non-error messages off)
+/// set verbose level (disabled, only set via cfg)
 void
 DQMStore::setVerbose(unsigned level) 
 { return; }
@@ -1285,7 +1285,7 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
       if (! me || overwrite)
       {
 	if (! me) me = bookInt(dir, label);
-	me->Fill(atoi(value.c_str())); // make sure this is 64 bits
+	me->Fill(atoll(value.c_str())); // make sure this is 64 bits
       }
     }
     else if (kind == "f")
@@ -1604,7 +1604,7 @@ DQMStore::makeVersionInfo()
     versGlobaltag_ = bookString("Globaltag","global tag"); // FIXME
     versTaglist_   = bookString("Taglist","list of tags"); // FIXME
     versDataset_   = bookString("Dataset","data set");     // FIXME
-    
+    return;
 }
 
 /// read ROOT objects from file <file> in directory <onlypath>;

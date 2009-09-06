@@ -34,7 +34,7 @@ class MonitorElement
 public:
   struct Value
   {
-    int			num;
+    int64_t        	num;
     double		real;
     std::string		str;
     TObject		*tobj;
@@ -115,7 +115,12 @@ public:
   void setResetMe(bool flag)
     { data_.flags |= DQM_FLAG_RESET; }
 
-  void Fill(float x);
+  void Fill(unsigned int x) { Fill(static_cast<int64_t>(x)); }
+  void Fill(int x) { Fill(static_cast<int64_t>(x)); }
+  void Fill(float x) { Fill(static_cast<double>(x)); }
+
+  void Fill(int64_t x);
+  void Fill(double x);
   void Fill(float x, float yw);
   void Fill(float x, float y, float zw);
   void Fill(float x, float y, float z, float w);
@@ -270,7 +275,7 @@ public:
   TProfile *getRefTProfile(void) const;
   TProfile2D *getRefTProfile2D(void) const;
 
-  const int &getIntValue(void) const
+  const int64_t &getIntValue(void) const
     {
       assert(kind_ == DQM_KIND_INT);
       return curvalue_.num;

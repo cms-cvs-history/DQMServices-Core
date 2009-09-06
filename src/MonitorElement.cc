@@ -175,12 +175,12 @@ MonitorElement::~MonitorElement(void)
 /// "Fill" ME methods:
 /// can be used with 1D histograms or scalars
 void
-MonitorElement::Fill(float x)
+MonitorElement::Fill(double x)
 {
   update();
   if (kind_ == DQM_KIND_INT)
   {
-    curvalue_.num = int(x);
+    curvalue_.num = static_cast<int64_t>(x);
     static_cast<TObjString *>(data_.object)
       ->SetString(tagString().c_str());
   }
@@ -199,6 +199,37 @@ MonitorElement::Fill(float x)
   else if (kind_ == DQM_KIND_TH1D)
     accessRootObject(__PRETTY_FUNCTION__, 1)
       ->Fill(x, 1);
+  else
+    incompatible(__PRETTY_FUNCTION__);
+}
+
+/// "Fill" ME methods:
+/// can be used with 1D histograms or scalars
+void
+MonitorElement::Fill(int64_t x)
+{
+  update();
+  if (kind_ == DQM_KIND_INT)
+  {
+    curvalue_.num = static_cast<int64_t>(x);
+    static_cast<TObjString *>(data_.object)
+      ->SetString(tagString().c_str());
+  }
+  else if (kind_ == DQM_KIND_REAL)
+  {
+    curvalue_.real = static_cast<double>(x);
+    static_cast<TObjString *>(data_.object)
+      ->SetString(tagString().c_str());
+  }
+  else if (kind_ == DQM_KIND_TH1F)
+    accessRootObject(__PRETTY_FUNCTION__, 1)
+      ->Fill(static_cast<short>(x), 1);
+  else if (kind_ == DQM_KIND_TH1S)
+    accessRootObject(__PRETTY_FUNCTION__, 1)
+      ->Fill(static_cast<float>(x), 1);
+  else if (kind_ == DQM_KIND_TH1D)
+    accessRootObject(__PRETTY_FUNCTION__, 1)
+      ->Fill(static_cast<double>(x), 1);
   else
     incompatible(__PRETTY_FUNCTION__);
 }
@@ -362,9 +393,9 @@ MonitorElement::valueString(void) const
 {
   std::ostringstream buf;
   if (kind_ == DQM_KIND_INT)
-    buf << "i=" << curvalue_.num;
+    buf << "i64=" << curvalue_.num;
   else if (kind_ == DQM_KIND_REAL)
-    buf << "f=" << std::setprecision(16) << curvalue_.real;
+    buf << "f64=" << std::setprecision(16) << curvalue_.real;
   else if (kind_ == DQM_KIND_STRING)
     buf << "s=" << curvalue_.str;
   else
