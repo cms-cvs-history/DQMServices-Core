@@ -175,7 +175,7 @@ MonitorElement::~MonitorElement(void)
 /// "Fill" ME methods:
 /// can be used with 1D histograms or scalars
 void
-MonitorElement::Fill(double x)
+MonitorElement::Fill(float x)
 {
   update();
   if (kind_ == DQM_KIND_INT)
@@ -205,7 +205,7 @@ MonitorElement::Fill(double x)
 
 /// can be used with 2D (x,y) or 1D (x, w) histograms
 void
-MonitorElement::Fill(double x, double yw)
+MonitorElement::Fill(float x, float yw)
 {
   update();
   if (kind_ == DQM_KIND_TH1F)
@@ -238,9 +238,9 @@ MonitorElement::ShiftFillLast(float y, float ye, int xscale)
 {
   update();
   if (kind_ == DQM_KIND_TH1F || 
-      kind_ == DQM_KIND_TH1S || 
+      kind_ == DQM_KIND_TH1S ||
       kind_ == DQM_KIND_TH1D ) 
-    {
+  {
     int nbins = getNbinsX();
     int entries = (int)getEntries();
     // first fill bins from left to right
@@ -252,15 +252,15 @@ MonitorElement::ShiftFillLast(float y, float ye, int xscale)
       index = nbins;
       xlow = entries - nbins + 2 ; xup = entries ; 
       // average first bin
-      double y1 = getBinContent(1);
-      double y2 = getBinContent(2);
-      double y1err = getBinError(1);
-      double y2err = getBinError(2);
-      double N = entries - nbins + 1.;
+      float y1 = getBinContent(1);
+      float y2 = getBinContent(2);
+      float y1err = getBinError(1);
+      float y2err = getBinError(2);
+      float N = entries - nbins + 1.;
       if ( ye == 0. || y1err == 0. || y2err == 0.) 
       {
         // for errors zero calculate unweighted mean and its error
-	double sum = N*y1 + y2;
+	float sum = N*y1 + y2;
         y1 = sum/(N+1.) ;
 	// FIXME check if correct
         y1err = sqrt((N+1.)*(N*y1*y1 + y2*y2) - sum*sum)/(N+1.);  
@@ -268,8 +268,8 @@ MonitorElement::ShiftFillLast(float y, float ye, int xscale)
       else 
       {
         // for errors non-zero calculate weighted mean and its error
-        double denom = (1./y1err + 1./y2err);
-        double mean = (y1/y1err + y2/y2err)/denom;
+        float denom = (1./y1err + 1./y2err);
+        float mean = (y1/y1err + y2/y2err)/denom;
 	// FIXME check if correct
 	y1err = sqrt(((y1-mean)*(y1-mean)/y1err +
                       (y2-mean)*(y2-mean)/y2err)/denom/2.);
@@ -539,7 +539,7 @@ MonitorElement::getNbinsZ(void) const
     ->GetNbinsZ(); }
 
 /// get content of bin (1-D)
-double
+float
 MonitorElement::getBinContent(int binx) const
 { return accessRootObject(__PRETTY_FUNCTION__, 1)
     ->GetBinContent(binx); }
@@ -557,7 +557,7 @@ MonitorElement::getBinContent(int binx, int biny, int binz) const
     ->GetBinContent(binx, biny, binz); }
 
 /// get uncertainty on content of bin (1-D) - See TH1::GetBinError for details
-double
+float
 MonitorElement::getBinError(int binx) const
 { return accessRootObject(__PRETTY_FUNCTION__, 1)
     ->GetBinError(binx); }
@@ -575,13 +575,13 @@ MonitorElement::getBinError(int binx, int biny, int binz) const
     ->GetBinError(binx, biny, binz); }
 
 /// get # of entries
-double
+float
 MonitorElement::getEntries(void) const
 { return accessRootObject(__PRETTY_FUNCTION__, 1)
     ->GetEntries(); }
 
 /// get # of bin entries (for profiles)
-double
+float
 MonitorElement::getBinEntries(int bin) const
 {
   if (kind_ == DQM_KIND_TPROFILE)
@@ -641,7 +641,7 @@ MonitorElement::getTitle(void) const
 // 
 /// set content of bin (1-D)
 void
-MonitorElement::setBinContent(int binx, double content)
+MonitorElement::setBinContent(int binx, float content)
 {
   update();
   accessRootObject(__PRETTY_FUNCTION__, 1)
@@ -666,7 +666,7 @@ MonitorElement::setBinContent(int binx, int biny, int binz, float content)
 
 /// set uncertainty on content of bin (1-D)
 void
-MonitorElement::setBinError(int binx, double error)
+MonitorElement::setBinError(int binx, float error)
 {
   update();
   accessRootObject(__PRETTY_FUNCTION__, 1)
@@ -693,7 +693,7 @@ MonitorElement::setBinError(int binx, int biny, int binz, float error)
 
 /// set # of bin entries (to be used for profiles)
 void
-MonitorElement::setBinEntries(int bin, double nentries)
+MonitorElement::setBinEntries(int bin, float nentries)
 {
   update();
   if (kind_ == DQM_KIND_TPROFILE)
@@ -708,7 +708,7 @@ MonitorElement::setBinEntries(int bin, double nentries)
 
 /// set # of entries
 void
-MonitorElement::setEntries(double nentries)
+MonitorElement::setEntries(float nentries)
 {
   update();
   accessRootObject(__PRETTY_FUNCTION__, 1)
@@ -1150,8 +1150,7 @@ MonitorElement::copyFrom(TH1 *from)
 
   if (isSoftResetEnabled())
   {
-    if (kind_ == DQM_KIND_TH1D
-	|| kind_ == DQM_KIND_TH1F
+    if (kind_ == DQM_KIND_TH1F
 	|| kind_ == DQM_KIND_TH1S
 	|| kind_ == DQM_KIND_TH1D
 	|| kind_ == DQM_KIND_TH2F

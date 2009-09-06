@@ -1194,16 +1194,6 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
     else if (isCollateME(me) || collateHistograms_)
       collate1S(me, h);
   }
-  else if (TH1D *h = dynamic_cast<TH1D *>(obj))
-  {
-    MonitorElement *me = findObject(dir, h->GetName(), path);
-    if (! me)
-      me = book1DD(dir, h->GetName(), (TH1D *) h->Clone());
-    else if (overwrite)
-      me->copyFrom(h);
-    else if (isCollateME(me) || collateHistograms_)
-      collate1DD(me, h);
-  }
   else if (TH2F *h = dynamic_cast<TH2F *>(obj))
   {
     MonitorElement *me = findObject(dir, h->GetName(), path);
@@ -1243,6 +1233,16 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
       me->copyFrom(h);
     else if (isCollateME(me) || collateHistograms_)
       collateProfile(me, h);
+  }
+  else if (TH1D *h = dynamic_cast<TH1D *>(obj))
+  {
+    MonitorElement *me = findObject(dir, h->GetName(), path);
+    if (! me)
+      me = book1DD(dir, h->GetName(), (TH1D *) h->Clone());
+    else if (overwrite)
+      me->copyFrom(h);
+    else if (isCollateME(me) || collateHistograms_)
+      collate1DD(me, h);
   }
   else if (TProfile2D *h = dynamic_cast<TProfile2D *>(obj))
   {
