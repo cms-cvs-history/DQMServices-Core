@@ -9,6 +9,7 @@
 # include "TH1D.h"
 # include "TH2F.h"
 # include "TH2S.h"
+# include "TH2D.h"
 # include "TH3F.h"
 # include "TProfile.h"
 # include "TProfile2D.h"
@@ -51,6 +52,7 @@ public:
     DQM_KIND_TH1D,
     DQM_KIND_TH2F,
     DQM_KIND_TH2S,
+    DQM_KIND_TH2D,
     DQM_KIND_TH3F,
     DQM_KIND_TPROFILE,
     DQM_KIND_TPROFILE2D
@@ -115,9 +117,10 @@ public:
   void setResetMe(bool flag)
     { data_.flags |= DQM_FLAG_RESET; }
 
+  void Fill(uint64_t x) { Fill(static_cast<int64_t>(x)); }
   void Fill(unsigned int x) { Fill(static_cast<int64_t>(x)); }
   void Fill(int x) { Fill(static_cast<int64_t>(x)); }
-  void Fill(float x) { Fill(static_cast<double>(x)); }
+  void Fill(float x) { Fill(static_cast<double>(x)); } 
 
   void Fill(int64_t x);
   void Fill(double x);
@@ -260,6 +263,7 @@ public:
   TH1D *getTH1D(void) const;
   TH2F *getTH2F(void) const;
   TH2S *getTH2S(void) const;
+  TH2D *getTH2D(void) const;
   TH3F *getTH3F(void) const;
   TProfile *getTProfile(void) const;
   TProfile2D *getTProfile2D(void) const;
@@ -271,6 +275,7 @@ public:
   TH1D *getRefTH1D(void) const;
   TH2F *getRefTH2F(void) const;
   TH2S *getRefTH2S(void) const;
+  TH2D *getRefTH2D(void) const;
   TH3F *getRefTH3F(void) const;
   TProfile *getRefTProfile(void) const;
   TProfile2D *getRefTProfile2D(void) const;
