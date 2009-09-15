@@ -453,7 +453,6 @@ DQMStore::book1DD(const std::string &dir, const std::string &name, TH1D *h)
   return book(dir, name, "book1DD", MonitorElement::DQM_KIND_TH1D, h, collate1DD);
 }
 
-/// ----------------------------
 /// Book 1D histogram.
 MonitorElement *
 DQMStore::book1D(const std::string &name, const std::string &title,
@@ -531,7 +530,14 @@ DQMStore::book2D(const std::string &dir, const std::string &name, TH2F *h)
 MonitorElement *
 DQMStore::book2S(const std::string &dir, const std::string &name, TH2S *h)
 {
-  return book(dir, name, "book2", MonitorElement::DQM_KIND_TH2S, h, collate2S);
+  return book(dir, name, "book2S", MonitorElement::DQM_KIND_TH2S, h, collate2S);
+}
+
+/// Book 2D histogram based on TH2D.
+MonitorElement *
+DQMStore::book2DD(const std::string &dir, const std::string &name, TH2D *h)
+{
+  return book(dir, name, "book2DD", MonitorElement::DQM_KIND_TH2D, h, collate2DD);
 }
 
 /// Book 2D histogram.
@@ -577,6 +583,13 @@ MonitorElement *
 DQMStore::book2S(const std::string &name, TH2S *source)
 {
   return book2S(pwd_, name, static_cast<TH2S *>(source->Clone(name.c_str())));
+}
+
+/// Book 2DShistogram by cloning an existing histogram.
+MonitorElement *
+DQMStore::book2DD(const std::string &name, TH2D *source)
+{
+  return book2DD(pwd_, name, static_cast<TH2D *>(source->Clone(name.c_str())));
 }
 
 // -------------------------------------------------------------------
@@ -757,6 +770,10 @@ DQMStore::collate2D(MonitorElement *me, TH2F *h)
 void
 DQMStore::collate2S(MonitorElement *me, TH2S *h)
 { me->getTH2S()->Add(h); }
+
+void
+DQMStore::collate2DD(MonitorElement *me, TH2D *h)
+{ me->getTH2D()->Add(h); }
 
 void
 DQMStore::collate3D(MonitorElement *me, TH3F *h)
