@@ -58,7 +58,7 @@ static std::string s_collateDirName = "Collate";
 static std::string s_safe = "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+=_()# ";
 static DQMStore *s_instance = 0;
 
-static const lat::Regexp s_rxmeval ("^<(.*)>(i|f|s|qr)=(.*)</\\1>$");
+static const lat::Regexp s_rxmeval ("^<(.*)>(i64|f64|s|qr)=(.*)</\\1>$");
 static const lat::Regexp s_rxmeqr  ("^st\\.(\\d+)\\.(.*)$");
 
 //////////////////////////////////////////////////////////////////////
@@ -751,46 +751,96 @@ DQMStore::bookProfile2D(const std::string &name, TProfile2D *source)
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
+
+bool
+DQMStore::checkBinningMatches(MonitorElement *me, TH1 *h)
+{
+  if (me->getTH1()->GetNbinsX() != h->GetNbinsX() ||
+      me->getTH1()->GetNbinsY() != h->GetNbinsY() ||
+      me->getTH1()->GetNbinsZ() != h->GetNbinsZ() ||
+      me->getTH1()->GetXaxis()->GetXmin() != h->GetXaxis()->GetXmin() ||
+      me->getTH1()->GetYaxis()->GetXmin() != h->GetYaxis()->GetXmin() ||
+      me->getTH1()->GetZaxis()->GetXmin() != h->GetZaxis()->GetXmin() ||
+      me->getTH1()->GetXaxis()->GetXmax() != h->GetXaxis()->GetXmax() ||
+      me->getTH1()->GetYaxis()->GetXmax() != h->GetYaxis()->GetXmax() ||
+      me->getTH1()->GetZaxis()->GetXmax() != h->GetZaxis()->GetXmax() ) 
+  {
+      std::cout << "*** DQMStore: WARNING: different binning - cannot add object '"
+		  << h->GetName() << "' of type '"
+		  << h->IsA()->GetName() << " to existing ME: "
+		  << me->getFullname() << "'\n";
+    return false ;
+  }
+  return true;	   
+}
+
 void
 DQMStore::collate1D(MonitorElement *me, TH1F *h)
-{ me->getTH1F()->Add(h); }
+{ 
+  if (checkBinningMatches(me,h))  
+    me->getTH1F()->Add(h); 
+}
 
 void
 DQMStore::collate1S(MonitorElement *me, TH1S *h)
-{ me->getTH1S()->Add(h); }
+{ 
+  if (checkBinningMatches(me,h))  
+    me->getTH1S()->Add(h); 
+}
 
 void
 DQMStore::collate1DD(MonitorElement *me, TH1D *h)
-{ me->getTH1D()->Add(h); }
+{ 
+  if (checkBinningMatches(me,h))  
+    me->getTH1D()->Add(h); 
+}
 
 void
 DQMStore::collate2D(MonitorElement *me, TH2F *h)
-{ me->getTH2F()->Add(h); }
+{ 
+  if (checkBinningMatches(me,h))  
+    me->getTH2F()->Add(h); 
+}
 
 void
 DQMStore::collate2S(MonitorElement *me, TH2S *h)
-{ me->getTH2S()->Add(h); }
+{   
+  if (checkBinningMatches(me,h))  
+    me->getTH2S()->Add(h); 
+}
 
 void
 DQMStore::collate2DD(MonitorElement *me, TH2D *h)
-{ me->getTH2D()->Add(h); }
+{ 
+  if (checkBinningMatches(me,h))  
+    me->getTH2D()->Add(h); 
+}
 
 void
 DQMStore::collate3D(MonitorElement *me, TH3F *h)
-{ me->getTH3F()->Add(h); }
+{ 
+  if (checkBinningMatches(me,h))  
+    me->getTH3F()->Add(h); 
+}
 
 void
 DQMStore::collateProfile(MonitorElement *me, TProfile *h)
 {
-  TProfile *meh = me->getTProfile();
-  me->addProfiles(h, meh, meh, 1, 1);
+  if (checkBinningMatches(me,h))  
+  {
+    TProfile *meh = me->getTProfile();
+    me->addProfiles(h, meh, meh, 1, 1);
+  }
 }
 
 void
 DQMStore::collateProfile2D(MonitorElement *me, TProfile2D *h)
 {
-  TProfile2D *meh = me->getTProfile2D();
-  me->addProfiles(h, meh, meh, 1, 1);
+  if (checkBinningMatches(me,h)) 
+  {
+    TProfile2D *meh = me->getTProfile2D();
+    me->addProfiles(h, meh, meh, 1, 1);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1196,9 +1246,9 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
     MonitorElement *me = findObject(dir, h->GetName(), path);
     if (! me)
       me = book1D(dir, h->GetName(), (TH1F *) h->Clone());
-    else if (overwrite)
+    else if (overwrite) 
       me->copyFrom(h);
-    else if (isCollateME(me) || collateHistograms_)
+    else if (isCollateME(me) || collateHistograms_) 
       collate1D(me, h);
   }
   else if (TH1S *h = dynamic_cast<TH1S *>(obj))
@@ -1271,32 +1321,42 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
     else if (isCollateME(me) || collateHistograms_)
       collateProfile2D(me, h);
   }
+  else if (TH2D *h = dynamic_cast<TH2D *>(obj))
+  {
+    MonitorElement *me = findObject(dir, h->GetName(), path);
+    if (! me)
+      me = book2DD(dir, h->GetName(), (TH2D *) h->Clone());
+    else if (overwrite)
+      me->copyFrom(h);
+    else if (isCollateME(me) || collateHistograms_)
+      collate2DD(me, h);
+  }
   else if (dynamic_cast<TObjString *>(obj))
   {
     std::string path;
     lat::RegexpMatch m;
     if (! s_rxmeval.match(obj->GetName(), 0, 0, &m))
     {
-      if (strstr(obj->GetName(), "CMSSW"))
-      {
-	if (verbose_)
-	  std::cout << "Input file version: " << obj->GetName() << std::endl;
-	return true;
-      }
-      else
-      {
+//      if (strstr(obj->GetName(), "CMSSW"))
+//      {
+//	if (verbose_)
+//	  std::cout << "Input file version: " << obj->GetName() << std::endl;
+//	return true;
+//      }
+//      else
+//      {
 	std::cout << "*** DQMStore: WARNING: cannot extract object '"
 		  << obj->GetName() << "' of type '"
 		  << obj->IsA()->GetName() << "'\n";
 	return false;
-      }
+//      }
     }
 
     std::string label = m.matchString(obj->GetName(), 1);
     std::string kind = m.matchString(obj->GetName(), 2);
     std::string value = m.matchString(obj->GetName(), 3);
 
-    if (kind == "i")
+    if (kind == "i64")
     {
       MonitorElement *me = findObject(dir, label, path);
       if (! me || overwrite)
@@ -1305,7 +1365,7 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
 	me->Fill(atoll(value.c_str())); // make sure this is 64 bits
       }
     }
-    else if (kind == "f")
+    else if (kind == "f64")
     {
       MonitorElement *me = findObject(dir, label, path);
       if (! me || overwrite)
