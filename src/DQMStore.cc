@@ -1679,7 +1679,7 @@ DQMStore::makeVersionInfo()
     processId_     = bookInt("processID"); processId_->Fill(gSystem->GetPid());   
 
     versGlobaltag_ = bookString("Globaltag","global tag"); // FIXME
-    versTaglist_   = bookString("Taglist","list of tags"); // FIXME
+    versTaglist_   = bookString("Taglist",getShowTags()); 
     versDataset_   = bookString("Dataset","data set");     // FIXME
     return;
 }
@@ -2238,3 +2238,47 @@ DQMStore::isReferenceME(MonitorElement *me) const
 bool
 DQMStore::isCollateME(MonitorElement *me) const
 { return me && isSubdirectory(s_collateDirName, me->path_); }
+
+// run showtag command line
+std::string 
+DQMStore::getShowTags(void)
+{
+   TString out;
+   FILE *pipe = gSystem->OpenPipe("showtags u -t", "r");
+
+   TString line;
+   while (line.Gets(pipe,true)) {
+     if (line.Contains("Test Release")) continue;
+     if (line.Contains("Base Release")) continue;
+     if (line.Contains("Test release")) continue;
+     if (line.Contains("--- Tag ---")) continue;
+     if (line.Contains(" ")) line.Replace(line.First(" "),1,":");
+     line.ReplaceAll(" ","");
+     out = out + line + ";";
+     if (line.Contains("-------------------")) break;
+     if (out.Length()>2000) break;
+   }
+   out.ReplaceAll("--","");
+   out.ReplaceAll(";-",";");
+   out.ReplaceAll(";;",";");
+   out.ReplaceAll("\n","");
+
+   Int_t r = gSystem->ClosePipe(pipe);
+   if (r) {
+     gSystem->Error("ShowTags","problem running command showtags -u -t");
+   }
+
+   std::string str(out);
+   if (str.length()>2000) str.resize(2000);
+
+   std::string safestr =
+     "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-;:";
+   size_t found=str.find_first_not_of(safestr);
+   if (found!=string::npos)
+   {
+     cout << "DQMStore::ShowTags: Illegal character found: " << str[found];
+     cout << " at position " << int(found) << endl;
+     return "notags";
+   }   
+   return str;
+}  

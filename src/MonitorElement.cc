@@ -178,6 +178,19 @@ MonitorElement::~MonitorElement(void)
   delete refvalue_;
 }
 
+void
+MonitorElement::Fill(std::string &value)
+{
+  update();
+  if (kind_ ==  DQM_KIND_STRING)
+  {
+    curvalue_.str = value;
+    static_cast<TObjString *>(data_.object)
+      ->SetString(tagString().c_str());
+  }
+  else
+    incompatible(__PRETTY_FUNCTION__);
+}
 /// "Fill" ME methods:
 /// can be used with 1D histograms or scalars
 void

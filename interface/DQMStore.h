@@ -210,6 +210,7 @@ public:
   void                          load(const std::string &filename,
 				     OpenRunDirs stripdirs = StripRunDirs);
   std::string			getFileReleaseVersion(const std::string &filename);
+  std::string                   getShowTags(void);
 
   //-------------------------------------------------------------------------
   // ---------------------- Public print methods -----------------------------

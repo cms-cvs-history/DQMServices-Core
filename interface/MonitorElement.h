@@ -130,6 +130,7 @@ public:
   
   void Fill(int64_t x);
   void Fill(double x);
+  void Fill(std::string &value);
 
   void Fill(double x, double yw);
   void Fill(double x, double y, double zw);
