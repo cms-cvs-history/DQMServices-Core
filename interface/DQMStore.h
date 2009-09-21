@@ -210,7 +210,6 @@ public:
   void                          load(const std::string &filename,
 				     OpenRunDirs stripdirs = StripRunDirs);
   std::string			getFileReleaseVersion(const std::string &filename);
-  std::string                   getShowTags(void);
 
   //-------------------------------------------------------------------------
   // ---------------------- Public print methods -----------------------------
@@ -248,7 +247,6 @@ private:
 					      const std::string &prepend,
 					      const std::string &curdir,
 					      OpenRunDirs stripdirs);
-  void                          makeVersionInfo(void);
 
   MonitorElement *		findObject(const std::string &dir,
 					   const std::string &name,
@@ -333,15 +331,6 @@ private:
   QAMap				qalgos_;
   QTestSpecs			qtestspecs_;
   
-  MonitorElement * versCMSSW_ ;
-  MonitorElement * versDataset_ ;
-  MonitorElement * versTaglist_ ;
-  MonitorElement * versGlobaltag_ ;
-  MonitorElement * hostName_;          ///Hostname of the local machine
-  MonitorElement * processName_;       ///DQM "name" of the job (eg, Hcal or DT)
-  MonitorElement * workingDir_;        ///Current working directory of the job
-  MonitorElement * processId_;         ///The PID associated with this job
-
   friend class edm::DQMHttpSource;
   friend class DQMOldReceiver;
   friend class DQMService;

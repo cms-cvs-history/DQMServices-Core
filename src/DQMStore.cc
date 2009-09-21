@@ -157,7 +157,6 @@ DQMStore::DQMStore(const edm::ParameterSet &pset)
     readFile(ref, true, "", s_referenceDirName, StripRunDirs);
   }
 
-  makeVersionInfo();
 
   initQCriterion<Comp2RefChi2>(qalgos_);
   initQCriterion<Comp2RefKolmogorov>(qalgos_);
@@ -1533,7 +1532,10 @@ DQMStore::save(const std::string &filename,
   // open output file, on 1st save recreate, later update
   std::string opt = "UPDATE";
   if (outputFileRecreate_) 
+  {
     opt = "RECREATE";
+    outputFileRecreate_=false;
+  }
   if (verbose_>0)
     std::cout << "\n DQMStore: Opening TFile '" << filename 
               << "' with option '" << opt <<"'\n";
@@ -1543,13 +1545,6 @@ DQMStore::save(const std::string &filename,
     raiseDQMError("DQMStore", "Failed to create/update file '%s'", filename.c_str());
   f.cd();
 
-  if (outputFileRecreate_) // write versions once upon opening
-  {
-    // still write this for for the time being
-    TObjString(edm::getReleaseVersion().c_str()).Write(); // Save CMSSW version
-    outputFileRecreate_=false;
-  }
-  
   // Construct a regular expression from the pattern string.
   std::auto_ptr<lat::Regexp> rxpat;
   if (! pattern.empty())
@@ -1667,21 +1662,6 @@ DQMStore::save(const std::string &filename,
     std::cout << "DQMStore::save: successfully wrote " << nme 
               << " objects from path '" << path  
 	      << "' into DQM file '" << filename << "'\n";
-}
-
-void 
-DQMStore::makeVersionInfo()
-{
-    setCurrentFolder("DQMVersion");
-    versCMSSW_     = bookString("CMSSW",edm::getReleaseVersion().c_str() );
-    hostName_      = bookString("hostName",gSystem->HostName());
-    workingDir_    = bookString("workingDir",gSystem->pwd());
-    processId_     = bookInt("processID"); processId_->Fill(gSystem->GetPid());   
-
-    versGlobaltag_ = bookString("Globaltag","global tag"); // FIXME
-    versTaglist_   = bookString("Taglist",getShowTags()); 
-    versDataset_   = bookString("Dataset","data set");     // FIXME
-    return;
 }
 
 /// read ROOT objects from file <file> in directory <onlypath>;
@@ -2238,47 +2218,3 @@ DQMStore::isReferenceME(MonitorElement *me) const
 bool
 DQMStore::isCollateME(MonitorElement *me) const
 { return me && isSubdirectory(s_collateDirName, me->path_); }
-
-// run showtag command line
-std::string 
-DQMStore::getShowTags(void)
-{
-   TString out;
-   FILE *pipe = gSystem->OpenPipe("showtags u -t", "r");
-
-   TString line;
-   while (line.Gets(pipe,true)) {
-     if (line.Contains("Test Release")) continue;
-     if (line.Contains("Base Release")) continue;
-     if (line.Contains("Test release")) continue;
-     if (line.Contains("--- Tag ---")) continue;
-     if (line.Contains(" ")) line.Replace(line.First(" "),1,":");
-     line.ReplaceAll(" ","");
-     out = out + line + ";";
-     if (line.Contains("-------------------")) break;
-     if (out.Length()>2000) break;
-   }
-   out.ReplaceAll("--","");
-   out.ReplaceAll(";-",";");
-   out.ReplaceAll(";;",";");
-   out.ReplaceAll("\n","");
-
-   Int_t r = gSystem->ClosePipe(pipe);
-   if (r) {
-     gSystem->Error("ShowTags","problem running command showtags -u -t");
-   }
-
-   std::string str(out);
-   if (str.length()>2000) str.resize(2000);
-
-   std::string safestr =
-     "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-;:";
-   size_t found=str.find_first_not_of(safestr);
-   if (found!=string::npos)
-   {
-     cout << "DQMStore::ShowTags: Illegal character found: " << str[found];
-     cout << " at position " << int(found) << endl;
-     return "notags";
-   }   
-   return str;
-}  
