@@ -58,7 +58,7 @@ static std::string s_collateDirName = "Collate";
 static std::string s_safe = "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+=_()# ";
 static DQMStore *s_instance = 0;
 
-static const lat::Regexp s_rxmeval ("^<(.*)>(i64|f64|s|qr)=(.*)</\\1>$");
+static const lat::Regexp s_rxmeval ("^<(.*)>(i|f|s|qr)=(.*)</\\1>$");
 static const lat::Regexp s_rxmeqr  ("^st\\.(\\d+)\\.(.*)$");
 
 //////////////////////////////////////////////////////////////////////
@@ -1336,26 +1336,32 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
     lat::RegexpMatch m;
     if (! s_rxmeval.match(obj->GetName(), 0, 0, &m))
     {
-//      if (strstr(obj->GetName(), "CMSSW"))
-//      {
-//	if (verbose_)
-//	  std::cout << "Input file version: " << obj->GetName() << std::endl;
-//	return true;
-//      }
-//      else
-//      {
+      if (strstr(obj->GetName(), "CMSSW"))
+      {
+        if (verbose_)
+          std::cout << "Input file version: " << obj->GetName() << std::endl;
+        return true;
+      }
+      else if (strstr(obj->GetName(), "DQMPATCH"))
+      {
+        if (verbose_)
+          std::cout << "DQM patch version: " << obj->GetName() << std::endl;
+        return true;
+      }
+      else
+      {
 	std::cout << "*** DQMStore: WARNING: cannot extract object '"
 		  << obj->GetName() << "' of type '"
 		  << obj->IsA()->GetName() << "'\n";
 	return false;
-//      }
+      }
     }
 
     std::string label = m.matchString(obj->GetName(), 1);
     std::string kind = m.matchString(obj->GetName(), 2);
     std::string value = m.matchString(obj->GetName(), 3);
 
-    if (kind == "i64")
+    if (kind == "i")
     {
       MonitorElement *me = findObject(dir, label, path);
       if (! me || overwrite)
@@ -1364,7 +1370,7 @@ DQMStore::extract(TObject *obj, const std::string &dir, bool overwrite)
 	me->Fill(atoll(value.c_str())); // make sure this is 64 bits
       }
     }
-    else if (kind == "f64")
+    else if (kind == "f")
     {
       MonitorElement *me = findObject(dir, label, path);
       if (! me || overwrite)

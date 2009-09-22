@@ -418,9 +418,9 @@ MonitorElement::valueString(void) const
 {
   std::ostringstream buf;
   if (kind_ == DQM_KIND_INT)
-    buf << "i64=" << curvalue_.num;
+    buf << "i=" << curvalue_.num;
   else if (kind_ == DQM_KIND_REAL)
-    buf << "f64=" << std::setprecision(16) << curvalue_.real;
+    buf << "f=" << std::setprecision(16) << curvalue_.real;
   else if (kind_ == DQM_KIND_STRING)
     buf << "s=" << curvalue_.str;
   else
@@ -1484,6 +1484,15 @@ MonitorElement::getRefTH2S(void) const
   assert(kind_ == DQM_KIND_TH2S);
   const_cast<MonitorElement *>(this)->update();
   return dynamic_cast<TH2S *>
+    (checkRootObject(data_.name, data_.reference, __PRETTY_FUNCTION__, 2));
+}
+
+TH2D *
+MonitorElement::getRefTH2D(void) const
+{
+  assert(kind_ == DQM_KIND_TH2D);
+  const_cast<MonitorElement *>(this)->update();
+  return dynamic_cast<TH2D *>
     (checkRootObject(data_.name, data_.reference, __PRETTY_FUNCTION__, 2));
 }
 
