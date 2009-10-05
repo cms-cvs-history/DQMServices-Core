@@ -11,8 +11,10 @@
 <library file="DQMBackEndInterfaceQTestsExample.cc" name=DQMServicesCoreROOTQTestsExample>
  <flags EDM_PLUGIN=1>
 </library>
-
 <library file="DQMMonitorUIRootStandaloneExample.cc" name=DQMServicesUIStandaloneExample>
+ <flags EDM_PLUGIN=1>
+</library>
+<library file="DQMSourceExampleConfig.cc" name=DQMServicesCoreSourceExample>
  <flags EDM_PLUGIN=1>
 </library>
 
