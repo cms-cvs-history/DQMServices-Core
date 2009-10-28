@@ -64,6 +64,8 @@ public:
   static const uint32_t DQM_FLAG_RESET      = 0x01000000;
   static const uint32_t DQM_FLAG_ACCUMULATE = 0x02000000;
 
+  static const uint32_t DQM_FLAG_LUMI       = 0x04000000;
+
 private:
   Kind			kind_;
   DQMNet::CoreObject	data_;
@@ -117,6 +119,14 @@ public:
   /// (typically called by Sources that control the original ME)
   void setResetMe(bool flag)
     { data_.flags |= DQM_FLAG_RESET; }
+
+  /// true if ME is meant to be stored for each luminosity section
+  bool getLumiFlag(void) const
+    { return data_.flags & DQM_FLAG_LUMI; }
+
+  /// this ME is meant to be stored for each luminosity section
+  void setLumiFlag(void)
+    { data_.flags |= DQM_FLAG_LUMI; }
 
   void Fill(uint64_t x) { Fill(static_cast<int64_t>(x)); }
   void Fill(int32_t x)  { Fill(static_cast<int64_t>(x)); }
