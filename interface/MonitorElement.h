@@ -128,6 +128,11 @@ public:
   void setLumiFlag(void)
     { data_.flags |= DQM_FLAG_LUMI; }
 
+#if __WORDSIZE > 32 
+  void Fill(long long x)          { Fill(static_cast<int64_t>(x)); }
+  void Fill(unsigned long long x) { Fill(static_cast<int64_t>(x)); }
+#endif
+
   void Fill(uint64_t x) { Fill(static_cast<int64_t>(x)); }
   void Fill(int32_t x)  { Fill(static_cast<int64_t>(x)); }
   void Fill(uint32_t x) { Fill(static_cast<int64_t>(x)); }
